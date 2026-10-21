@@ -32,6 +32,13 @@ Written next to the game / `steamclient` binary.
 
 32-bit only, to match `hw` and `steam_api`.
 
+Fetch the Authum submodule first (Ed25519 for Vellum tickets; nested
+submodules are not needed):
+
+```sh
+git submodule update --init lib/authum
+```
+
 ### Windows
 
 Needs:
@@ -114,3 +121,5 @@ CMake `-DVELLUM_NO_SERVER_BROWSER=ON` leaves the Internet tab empty (no baked ma
 MIT. See [LICENSE](LICENSE).
 
 Windows builds vendor [Opus](https://github.com/xiph/opus) (BSD-style) through CMake FetchContent. Linux builds against the distro Opus package.
+
+`steamclient` compiles [Monocypher](https://monocypher.org/) 4.0.2 from the Authum submodule (`lib/authum/lib/monocypher`), Copyright (c) 2017-2023 Loup Vaillant, Michael Savage, Fabio Scotoni — BSD-2-Clause / CC0-1.0, see `lib/authum/lib/monocypher/LICENCE.md`.
