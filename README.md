@@ -16,8 +16,8 @@ The engine, filesystem, and `hw` live in [raspad-hl](https://github.com/darwin12
 ## What steamclient implements
 
 - **SteamClient012 / 017 / 020** — enough of `CreateInterface` for GoldSrc 8684 and Steam Half-Life (Oct 2024 / 10210+).
-- **Auth** — 64-byte Vellum ticket (`VLLM`, `CA_VELLUM`). No RevEmu dialect.
-- **Identity** — persona is the OS user name. The ticket ident is hostname plus a machine serial (Windows: `COMPUTERNAME` and the C: volume serial; Linux: `gethostname` and `/etc/machine-id`).
+- **Auth** — 120-byte Vellum v2 ticket (`VLLM`), Ed25519-signed for the server address the engine dials and the local clock; checked by [qproto](https://github.com/darwin128k/raspad-qproto) 2.x. No RevEmu dialect. Ed25519 comes from [Authum](https://github.com/darwin128k/raspad-authum) (`lib/authum` submodule, vendored Monocypher).
+- **Identity** — persona is the OS user name. The SteamID comes from a key pair created on first run and kept in the user profile (Windows: `%APPDATA%\Raspad\vellum.key`; Linux: `$XDG_DATA_HOME/raspad/vellum.key` or `~/.local/share/raspad/vellum.key`, mode 0600). Never in the game folder — copy that key and you copy the SteamID. Nothing about the machine (hostname, disk serial) is sent.
 - **Server browser** — favorites/history via `config/serverbrowser.vdf`. Internet lists query the baked GoldSrc UDP master (`37.230.210.218:27010`). LAN is UDP broadcast. Game/map/ping are filled with A2S.
 - **HTTP** — real `ISteamHTTP` for FastDL and list fetches (WinINet on Windows, libcurl on Linux).
 - **Voice** — `ISteamUser` capture/encode/decode. Microphone opens only while `+voicerecord` is held. Packets are Steam Voice Opus (24 kHz), so other Vellum/Steam-format clients can hear you. No extra voice plugin.
