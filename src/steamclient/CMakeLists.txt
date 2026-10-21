@@ -22,7 +22,7 @@ if(WIN32)
         steam_voice.cpp
         steamclient.def
     )
-    target_link_libraries(steamclient PRIVATE advapi32 ws2_32 wininet winhttp winmm opus)
+    target_link_libraries(steamclient PRIVATE advapi32 bcrypt ws2_32 wininet winhttp winmm opus)
     target_compile_definitions(steamclient PRIVATE _CRT_SECURE_NO_WARNINGS)
 else()
     add_library(steamclient SHARED
@@ -37,9 +37,19 @@ else()
     target_link_libraries(steamclient PRIVATE pthread dl opus asound)
 endif()
 
+# Ed25519 for Vellum v2 tickets: Authum's wrapper over its vendored Monocypher
+# (only these three C files — no lh, no authum_client).
+target_sources(steamclient PRIVATE
+    ${AUTHUM_DIR}/src/client/ed25519.c
+    ${AUTHUM_DIR}/lib/monocypher/monocypher.c
+    ${AUTHUM_DIR}/lib/monocypher/monocypher-ed25519.c
+)
+
 target_include_directories(steamclient PRIVATE
     ${CMAKE_SOURCE_DIR}/src/common
     ${CMAKE_CURRENT_SOURCE_DIR}
+    ${AUTHUM_DIR}/include
+    ${AUTHUM_DIR}/lib/monocypher
 )
 
 if (MSVC)

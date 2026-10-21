@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(vellum LANGUAGES CXX)
+project(vellum LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
@@ -20,6 +20,11 @@ option(HL_METAHHOOK "Embed MetaHookSv in the standalone launcher" OFF)
 option(VELLUM_NO_SERVER_BROWSER "Internet tab stays empty (no baked master)" OFF)
 set(HL_DIR "" CACHE PATH "Path to raspad-hl (required when REVLOADER_STANDALONE=ON)")
 set(METAHOOK_DIR "" CACHE PATH "Path to MetaHookSv (default: HL_DIR/../metahook)")
+
+set(AUTHUM_DIR "${CMAKE_SOURCE_DIR}/lib/authum")
+if(NOT EXISTS "${AUTHUM_DIR}/lib/monocypher/monocypher.c")
+    message(FATAL_ERROR "lib/authum missing - run: git submodule update --init lib/authum")
+endif()
 
 if(HL_METAHHOOK AND NOT WIN32)
     message(FATAL_ERROR "HL_METAHHOOK is Windows-only")

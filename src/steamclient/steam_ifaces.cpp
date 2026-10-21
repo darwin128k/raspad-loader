@@ -5,6 +5,8 @@
 #include "steam_http.h"
 #include "steam_voice.h"
 
+#include <authum/crypto/ed25519.h>
+
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -160,7 +162,7 @@ public:
 	{
 		int n;
 		Vellum_Log("auth InitiateGameConnection max=%d ip=%u port=%u", cbMaxAuthBlob, ip, (unsigned)port);
-		n = Vellum_WriteAuthBlob(pAuthBlob, cbMaxAuthBlob);
+		n = Vellum_WriteAuthBlob(pAuthBlob, cbMaxAuthBlob, ip, port);
 		Vellum_Log("auth connect wrote=%d ip=%u port=%u account=%u", n, ip, (unsigned)port,
 		           (unsigned)Vellum_GetIdentity().account_id);
 		return n;
@@ -222,7 +224,7 @@ public:
 	{
 		int n;
 		Vellum_Log("auth InitiateGameConnection_DEPRECATED max=%d ip=%u port=%u", cbMaxAuthBlob, ip, (unsigned)port);
-		n = Vellum_WriteAuthBlob(pAuthBlob, cbMaxAuthBlob);
+		n = Vellum_WriteAuthBlob(pAuthBlob, cbMaxAuthBlob, ip, port);
 		Vellum_Log("auth connect(depr) wrote=%d ip=%u port=%u account=%u", n, ip, (unsigned)port,
 		           (unsigned)Vellum_GetIdentity().account_id);
 		return n;
@@ -1111,7 +1113,7 @@ void Vellum_QueueCallback(HSteamUser user, int id, const void *data, int size)
 static int Vellum_FillAuthTicket(void *pTicket, int cbMaxTicket, uint32 *pcbTicket)
 {
 	GetAuthSessionTicketResponse_t r;
-	int n = Vellum_WriteAuthBlob(pTicket, cbMaxTicket);
+	int n = Vellum_WriteAuthBlob(pTicket, cbMaxTicket, 0, 0);
 	if (pcbTicket) {
 		*pcbTicket = (uint32)n;
 	}
@@ -2275,9 +2277,14 @@ static CSteamID Vellum_GameServerSteamId()
 static CSteamID Vellum_SteamIdFromAuthBlob(const void *blob, int len)
 {
 	if (blob != NULL && len == (int)sizeof(VellumTicket)) {
-		const VellumTicket *t = (const VellumTicket *)blob;
-		if (Vellum_TicketValid(t, (size_t)len)) {
-			return CSteamID(t->account_id, k_EUniversePublic, k_EAccountTypeIndividual);
+		VellumTicket t;
+		memcpy(&t, blob, sizeof(t));
+		/* Listen server: no key pins here, but the id must at least be the signer's. */
+		if (t.magic == VELLUM_TICKET_MAGIC && t.version == VELLUM_TICKET_VERSION &&
+		    authum_crypto_ed25519_check(t.signature, t.public_key, (const authum_byte_t *)&t,
+		                                (authum_usize_t)VELLUM_TICKET_SIGNED_SIZE)) {
+			return CSteamID(Vellum_AccountIdFromKey(t.public_key), k_EUniversePublic,
+			                k_EAccountTypeIndividual);
 		}
 	}
 	return CSteamID(Vellum_GetIdentity().account_id ^ 0x10000u, k_EUniversePublic, k_EAccountTypeIndividual);
@@ -2357,7 +2364,7 @@ public:
 	virtual void SetAdvertiseServerActive(bool) {}
 	virtual HAuthTicket GetAuthSessionTicket(void *pTicket, int cbMaxTicket, uint32 *pcbTicket)
 	{
-		int n = Vellum_WriteAuthBlob(pTicket, cbMaxTicket);
+		int n = Vellum_WriteAuthBlob(pTicket, cbMaxTicket, 0, 0);
 		if (pcbTicket) *pcbTicket = (uint32)n;
 		return n ? 1 : 0;
 	}
