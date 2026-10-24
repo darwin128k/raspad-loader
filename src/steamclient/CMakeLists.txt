@@ -1,4 +1,4 @@
-if(WIN32)
+﻿if(WIN32)
     include(FetchContent)
     set(OPUS_BUILD_SHARED_LIBRARY OFF CACHE BOOL "" FORCE)
     set(OPUS_BUILD_TESTING OFF CACHE BOOL "" FORCE)
@@ -16,6 +16,7 @@ if(WIN32)
     add_library(steamclient SHARED
         dllmain.cpp
         identity.cpp
+        vellum_config.cpp
         steam_ifaces.cpp
         steam_query.cpp
         steam_http.cpp
@@ -27,6 +28,7 @@ if(WIN32)
 else()
     add_library(steamclient SHARED
         identity.cpp
+        vellum_config.cpp
         steam_ifaces.cpp
         steam_query.cpp
         steam_http.cpp
@@ -38,7 +40,7 @@ else()
 endif()
 
 # Ed25519 for Vellum v2 tickets: Authum's wrapper over its vendored Monocypher
-# (only these three C files — no lh, no authum_client).
+# (only these three C files вЂ” no lh, no authum_client).
 target_sources(steamclient PRIVATE
     ${AUTHUM_DIR}/src/client/ed25519.c
     ${AUTHUM_DIR}/lib/monocypher/monocypher.c

@@ -1,9 +1,10 @@
-#include "types.h"
+﻿#include "types.h"
 #include "identity.h"
 #include "exports.h"
 #include "steam_query.h"
 #include "steam_http.h"
 #include "steam_voice.h"
+#include "vellum_config.h"
 
 #include <authum/crypto/ed25519.h>
 
@@ -1184,7 +1185,6 @@ public:
 };
 
 #define VELLUM_MASTER_CFG_MAX 8
-#define VELLUM_MASTER_BAKED "37.230.210.218:27010"
 
 static VellumFav g_favs[VELLUM_FAV_MAX];
 static int g_fav_n;
@@ -1374,35 +1374,6 @@ static int Vellum_PendingGrow(VellumListReq *req, int need)
 	req->pending = npend;
 	req->pending_cap = ncap;
 	return 1;
-}
-
-static void Vellum_GameDir(char *dir, size_t dirSize)
-{
-#ifdef _WIN32
-	HMODULE mod = NULL;
-	char *slash;
-	GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-	                   (LPCSTR)&Vellum_GameDir, &mod);
-	GetModuleFileNameA(mod, dir, (DWORD)dirSize);
-	dir[dirSize - 1] = '\0';
-	slash = strrchr(dir, '\\');
-	if (slash != NULL) {
-		slash[1] = '\0';
-	}
-#else
-	ssize_t n = readlink("/proc/self/exe", dir, dirSize - 1);
-	char *slash;
-	if (n > 0) {
-		dir[n] = '\0';
-		slash = strrchr(dir, '/');
-		if (slash != NULL) {
-			slash[1] = '\0';
-		}
-	} else {
-		strncpy(dir, "./", dirSize - 1);
-		dir[dirSize - 1] = '\0';
-	}
-#endif
 }
 
 static int Vellum_ParseAddr(const char *s, uint32 *ip, uint16 *port)
@@ -1655,6 +1626,8 @@ static void Vellum_MasterAddAddr(const char *addr)
 
 static void Vellum_MasterLoad()
 {
+	int i;
+
 	if (g_master_loaded) {
 		return;
 	}
@@ -1664,8 +1637,18 @@ static void Vellum_MasterLoad()
 	Vellum_Log("master search disabled");
 	return;
 #endif
-	Vellum_MasterAddAddr(VELLUM_MASTER_BAKED);
-	Vellum_Log("master baked %s", VELLUM_MASTER_BAKED);
+	/* No master is baked in: the deployment names its own in
+	 * <game>/config/vellum.cfg ("masters = host:port, ...").  Without that
+	 * file the Internet tab of the server browser stays empty. */
+	Vellum_ConfigLoad();
+	for (i = 0; i < Vellum_ConfigMasterCount(); i++) {
+		Vellum_MasterAddAddr(Vellum_ConfigMaster(i));
+	}
+	if (g_master_n == 0) {
+		Vellum_Log("no master configured - internet list stays empty");
+	} else {
+		Vellum_Log("masters configured n=%d", g_master_n);
+	}
 }
 
 static int Vellum_FavFind(AppId_t app, uint32 ip, uint16 conn, uint16 query)

@@ -1,4 +1,16 @@
-# Vellum
+<p align="center">
+  <img src="assets/logo.png" alt="Vellum" width="260">
+</p>
+
+<h1 align="center">
+  <b>Vellum</b>
+</h1>
+
+<p align="center">
+  GoldSrc loader and <code>steamclient</code> for the Raspad stack.
+</p>
+
+---
 
 GoldSrc loader and `steamclient` for the Raspad stack. It stands in for Steam so Counter-Strike 1.6 (and other Half-Life 1 games) can run without the Steam client, RevEmu sidecars, or extra plugins.
 
@@ -42,7 +54,7 @@ and dropping `res/<name>.rc` + `res/<name>.ico` next to the cstrike ones.
 - **SteamClient012 / 017 / 020** — enough of `CreateInterface` for GoldSrc 8684 and Steam Half-Life (Oct 2024 / 10210+).
 - **Auth** — 120-byte Vellum v2 ticket (`VLLM`), Ed25519-signed for the server address the engine dials and the local clock; checked by [qproto](https://github.com/darwin128k/raspad-qproto) 2.x. No RevEmu dialect. Ed25519 comes from [Authum](https://github.com/darwin128k/raspad-authum) (`lib/authum` submodule, vendored Monocypher).
 - **Identity** — persona is the OS user name. The SteamID comes from a key pair created on first run and kept in the user profile (Windows: `%APPDATA%\Raspad\vellum.key`; Linux: `$XDG_DATA_HOME/raspad/vellum.key` or `~/.local/share/raspad/vellum.key`, mode 0600). Never in the game folder — copy that key and you copy the SteamID. Nothing about the machine (hostname, disk serial) is sent.
-- **Server browser** — favorites/history via `config/serverbrowser.vdf`. Internet lists query the baked GoldSrc UDP master (`37.230.210.218:27010`). LAN is UDP broadcast. Game/map/ping are filled with A2S.
+- **Server browser** — favorites/history via `config/serverbrowser.vdf`. The Internet list comes from the masters named in `config/vellum.cfg`; with no master configured the tab stays empty. LAN is UDP broadcast. Game/map/ping are filled with A2S.
 - **HTTP** — real `ISteamHTTP` for FastDL and list fetches (WinINet on Windows, libcurl on Linux).
 - **Voice** — `ISteamUser` capture/encode/decode. Microphone opens only while `+voicerecord` is held. Packets are Steam Voice Opus (24 kHz), so other Vellum/Steam-format clients can hear you. No extra voice plugin.
 
@@ -50,7 +62,18 @@ and dropping `res/<name>.rc` + `res/<name>.ico` next to the cstrike ones.
 
 Written next to the game / `steamclient` binary.
 
-**`config/serverbrowser.vdf`** — favorites and history, same layout as stock GoldSrc. The Internet tab does not read a VDF; the UDP master address is compiled in.
+**`config/serverbrowser.vdf`** — favorites and history, same layout as stock GoldSrc. The Internet tab does not read a VDF.
+
+**`config/vellum.cfg`** — runtime settings of the facade:
+
+```
+# Masters to query for the Internet server list, comma separated.
+# Empty (or no file at all) = no master is queried, the Internet tab stays
+# empty.  Favorites and LAN are unaffected either way.
+masters = 10.0.0.5:27010, 10.0.0.6:27010
+```
+
+No master is baked into the binary: every deployment names its own.
 
 ## Build
 
@@ -140,7 +163,7 @@ One loader instance at a time. Optional `-launch` / `-appid`. Default game is `c
 
 Release builds write no `vellum.log`. Debug (`build.bat debug`) logs a timestamped session: identity, interfaces, connect ticket, master list, and voice tx/rx.
 
-CMake `-DVELLUM_NO_SERVER_BROWSER=ON` leaves the Internet tab empty (no baked master query). Default is **OFF**. Favorites and LAN are unchanged.
+CMake `-DVELLUM_NO_SERVER_BROWSER=ON` compiles the Internet browser out entirely. Default is **OFF**. Favorites and LAN are unaffected.
 
 ## License
 
