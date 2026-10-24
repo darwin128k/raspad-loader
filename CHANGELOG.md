@@ -22,8 +22,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   standalone build compiles the `hl` launcher into the wrapper so the game
   runs in one process and no `hl.exe` is needed.
 
+- **`config/vellum.cfg`** — runtime settings of the `steamclient` facade,
+  read from the game folder:
+
+  ```
+  masters = 10.0.0.5:27010, 10.0.0.6:27010
+  ```
+
+  An empty list, or no file at all, means that no master is queried and the
+  Internet tab of the server browser stays empty (favorites and LAN are
+  unaffected).
+
 ### Changed
 
+- **No master is baked into the binary any more.** The GoldSrc UDP master used
+  to be compiled in (`37.230.210.218:27010`, a CS 1.6 list); a deployment now
+  names its own in `config/vellum.cfg`. The binary does not care which game
+  the list belongs to.
 - **Vellum v2 tickets (breaking: servers need qproto 2.1+).** The connect
   ticket is now 120 bytes, Ed25519-signed over the server ip:port the engine
   dials and the local clock. A ticket one server collects no longer works on
