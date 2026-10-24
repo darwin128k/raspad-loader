@@ -1,6 +1,10 @@
 @echo off
 setlocal
-cd /d "%~dp0"
+
+rem source directory without a trailing backslash, for cmake
+for %%I in ("%~dp0") do set "SRCDIR=%%~fI"
+set "SRCDIR=%SRCDIR:~0,-1%"
+cd /d "%SRCDIR%"
 
 set VCVARS="C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars32.bat"
 call %VCVARS% >nul
@@ -9,9 +13,9 @@ if errorlevel 1 (
     exit /b 1
 )
 
+set BUILD_TYPE=Release
 set STANDALONE=OFF
 set METAHHOOK=OFF
-set BUILD_TYPE=Release
 set "HL_DIR="
 
 :parse_args
@@ -50,39 +54,69 @@ echo Unknown argument: %~1
 exit /b 1
 :args_done
 if "%STANDALONE%"=="ON" if "%HL_DIR%"=="" (
-    if exist "%~dp0..\raspad-hl\src\launcher.cpp" (
+    if exist "%SRCDIR%\..\raspad-hl\src\launcher.cpp" (
         set "HL_DIR=%~dp0..\raspad-hl"
     ) else (
         set "HL_DIR=%~dp0..\hl"
     )
 )
-if "%STANDALONE%"=="ON" if "%METAHHOOK%"=="ON" (
-    call "%HL_DIR%\prepare-metahook.bat"
-    if errorlevel 1 exit /b 1
-)
 
-if not exist build mkdir build
-cd build
+rem One wrapper per game: <name> <game dir> <steam appid>.
+rem The first one keeps the historical build\ directory.
+call :build_edition cstrike cstrike 10
+if errorlevel 1 exit /b 1
+call :build_edition svencoop svencoop 225840
+if errorlevel 1 exit /b 1
 
-if "%STANDALONE%"=="ON" (
-    cmake -G "Ninja" -DCMAKE_BUILD_TYPE=%BUILD_TYPE% -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl -DREVLOADER_STANDALONE=ON -DHL_METAHHOOK=%METAHHOOK% -DHL_DIR="%HL_DIR%" ..
-) else (
-    cmake -G "Ninja" -DCMAKE_BUILD_TYPE=%BUILD_TYPE% -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl -DREVLOADER_STANDALONE=OFF ..
-)
+echo.
+echo Build OK:
+call :report cstrike
+call :report svencoop
+endlocal
+exit /b 0
+
+:build_edition
+set NAME=%~1
+set GAME=%~2
+set APPID=%~3
+call :builddir
+if not exist "%BUILDDIR%" mkdir "%BUILDDIR%"
+pushd "%BUILDDIR%"
+cmake -G "Ninja" -DCMAKE_BUILD_TYPE=%BUILD_TYPE% -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl -DREVLOADER_STANDALONE=%STANDALONE% -DHL_METAHHOOK=%METAHHOOK% -DHL_DIR="%HL_DIR%" -DVELLUM_NAME="%NAME%" -DVELLUM_GAME="%GAME%" -DVELLUM_APPID="%APPID%" "%SRCDIR%"
 if errorlevel 1 (
-    echo CMake configure failed
+    popd
     exit /b 1
 )
-
 cmake --build .
 if errorlevel 1 (
-    echo Build failed
+    popd
     exit /b 1
 )
+popd
+exit /b 0
 
-if "%STANDALONE%"=="ON" (
-    echo Build OK: build\cstrike.exe build\steamclient.dll ^(standalone, hl from %HL_DIR%, HL_METAHHOOK=%METAHHOOK%, %BUILD_TYPE%^)
+rem build directory of an edition: the wrapper and the standalone build keep
+rem separate caches, they configure the same target differently
+:builddir
+if /I "%NAME%"=="cstrike" (
+    if "%STANDALONE%"=="ON" (set BUILDDIR=build-standalone) else (set BUILDDIR=build)
 ) else (
-    echo Build OK: build\cstrike.exe build\steamclient.dll ^(%BUILD_TYPE%^)
+    if "%STANDALONE%"=="ON" (set BUILDDIR=build-%NAME%-standalone) else (set BUILDDIR=build-%NAME%)
 )
-endlocal
+exit /b 0
+
+:report
+if /I "%~1"=="cstrike" (
+    if "%STANDALONE%"=="ON" (
+        echo   build-standalone\%~1.exe build-standalone\steamclient.dll ^(%BUILD_TYPE%^)
+    ) else (
+        echo   build\%~1.exe build\steamclient.dll ^(%BUILD_TYPE%^)
+    )
+) else (
+    if "%STANDALONE%"=="ON" (
+        echo   build-%~1-standalone\%~1.exe build-%~1-standalone\steamclient.dll ^(%BUILD_TYPE%^)
+    ) else (
+        echo   build-%~1\%~1.exe build-%~1\steamclient.dll ^(%BUILD_TYPE%^)
+    )
+)
+exit /b 0

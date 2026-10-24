@@ -1,4 +1,4 @@
-#ifdef REVLOADER_STANDALONE
+﻿#ifdef REVLOADER_STANDALONE
 #include "launcher.h"
 #endif
 
@@ -19,8 +19,18 @@
  * LD_LIBRARY_PATH still has the game dir plus Steam Runtime i386 libs (GTK2/CEF).
  * Loader mode execs ProcName (default ./hl_linux for Steam Linux GoldSrc). */
 
-#define DEFAULT_STEAM_APPID "10"
-#define DEFAULT_PROC        "./hl_linux -game cstrike"
+#ifndef VELLUM_NAME
+#define VELLUM_NAME "cstrike"
+#endif
+#ifndef VELLUM_GAME
+#define VELLUM_GAME VELLUM_NAME
+#endif
+#ifndef VELLUM_APPID
+#define VELLUM_APPID "10"
+#endif
+
+#define DEFAULT_STEAM_APPID VELLUM_APPID
+#define DEFAULT_PROC        "./hl_linux -game " VELLUM_GAME
 
 static void Fail(const char *text)
 {
@@ -414,7 +424,7 @@ static int PidIsLive(pid_t pid)
 
 /* steam_api.so: SteamAPI_IsSteamRunning reads ~/.steam/steam.pid (and
  * ~/.steampid). If a live pid is already there (real Steam), leave it.
- * Otherwise this process is the stand-in — exec keeps the same pid. */
+ * Otherwise this process is the stand-in вЂ” exec keeps the same pid. */
 static void EnsureSteamLooksRunning(void)
 {
 	const char *home = getenv("HOME");
@@ -480,6 +490,10 @@ int main(int argc, char **argv)
 		} else if (strcmp(argv[i], "-appid") == 0 && i + 1 < argc) {
 			strncpy(appId, argv[++i], sizeof(appId) - 1);
 			appId[sizeof(appId) - 1] = '\0';
+		} else if (strcmp(argv[i], "-game") == 0 && i + 1 < argc) {
+			/* This wrapper belongs to one game, fixed at build time.  A
+			 * "-game" from the caller is dropped. */
+			i++;
 		} else {
 			AppendArg(extraArgs, sizeof(extraArgs), argv[i]);
 		}
@@ -497,7 +511,7 @@ int main(int argc, char **argv)
 
 	if (!HasArg(procName, "-game")) {
 		AppendArg(procName, sizeof(procName), "-game");
-		AppendArg(procName, sizeof(procName), "cstrike");
+		AppendArg(procName, sizeof(procName), VELLUM_GAME);
 	}
 #endif
 
@@ -558,7 +572,7 @@ int main(int argc, char **argv)
 		}
 		if (!HasArg(engineCmd, "-game")) {
 			AppendArg(engineCmd, sizeof(engineCmd), "-game");
-			AppendArg(engineCmd, sizeof(engineCmd), "cstrike");
+			AppendArg(engineCmd, sizeof(engineCmd), VELLUM_GAME);
 		}
 		if (!ArgvHasToken(argc, argv, "-game")) {
 			char selfPath[4096];
@@ -574,10 +588,16 @@ int main(int argc, char **argv)
 			selfPath[rn] = '\0';
 			nargv[n++] = selfPath;
 			for (j = 1; j < argc && n + 3 < 64; j++) {
+				/* the wrapper owns the game: drop a "-game" from the
+				 * caller so ours is the only one the engine sees */
+				if (strcmp(argv[j], "-game") == 0 && j + 1 < argc) {
+					j++;
+					continue;
+				}
 				nargv[n++] = argv[j];
 			}
 			nargv[n++] = (char *)"-game";
-			nargv[n++] = (char *)"cstrike";
+			nargv[n++] = (char *)VELLUM_GAME;
 			nargv[n] = NULL;
 			execv(selfPath, nargv);
 			Fail("Unable to re-exec with -game.");

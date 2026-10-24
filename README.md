@@ -13,6 +13,30 @@ No `rev.ini`, no `steam.dll`, no MetaHook/MetaVoice/MetaAudio. Copy the two bina
 
 The engine, filesystem, and `hw` live in [raspad-hl](https://github.com/darwin128k/raspad-hl). Vellum either spawns that `hl` binary (default loader mode) or compiles `src/launcher.cpp` from `HL_DIR` into this process (standalone).
 
+## Editions
+
+The loader is built once per game. Every edition is the same source with a
+different name, game directory, Steam AppId, icon and instance mutex:
+
+| Edition | Wrapper | Starts | Steam AppId | Build dir |
+|---|---|---|---|---|
+| Counter-Strike 1.6 | `cstrike.exe` | `hl.exe -game cstrike` | 10 | `build\` |
+| Sven Co-op | `svencoop.exe` | `hl.exe -game svencoop` | 225840 | `build-svencoop\` |
+
+An edition owns its game: it does **not** accept a `-game` from the caller —
+a `-game` on the command line is dropped, so the wrapper can never be talked
+into starting a different game. Everything else is passed through to the
+engine (`-connect`, `-console`, map names, …).
+
+Two shapes per edition:
+
+- **wrapper** (default) — spawns `hl.exe -game <game>`; needs `hl.exe` next to it.
+- **standalone** (`build.bat standalone`) — compiles the `hl` launcher into the
+  wrapper, so the game runs in one process and no `hl.exe` is needed.
+
+Add a new edition by adding a line to `build.bat` (name, game directory, AppId)
+and dropping `res/<name>.rc` + `res/<name>.ico` next to the cstrike ones.
+
 ## What steamclient implements
 
 - **SteamClient012 / 017 / 020** — enough of `CreateInterface` for GoldSrc 8684 and Steam Half-Life (Oct 2024 / 10210+).
@@ -62,7 +86,9 @@ build.bat standalone
 build.bat standalone D:\src\raspad-hl
 ```
 
-Output: `build\cstrike.exe`, `build\steamclient.dll`. Copy both into the game folder.
+Output: `build\cstrike.exe`, `build\steamclient.dll` and
+`build-svencoop\svencoop.exe`, `build-svencoop\steamclient.dll`. Copy the
+loader and the `steamclient` of your game into the game folder.
 
 ### Linux / WSL
 

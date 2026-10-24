@@ -1,5 +1,8 @@
 build/
 build-linux/
+build-standalone/
+build-svencoop/
+build-svencoop-standalone/
 orig/
 /cstrike.exe
 /cstrike_linux
