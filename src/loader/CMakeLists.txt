@@ -1,21 +1,57 @@
-if(WIN32)
-    add_executable(cstrike WIN32 main.cpp)
+# One wrapper per game.
+#
+# The same loader source is built into a separate executable for every game
+# it should start:
+#
+#   cstrike.exe  - Counter-Strike 1.6
+#   svencoop.exe - Sven Co-op
+#
+# Each wrapper knows its own name, game directory, Steam AppId, icon and
+# instance mutex.  None of them accepts a "-game" from the caller: the game
+# is fixed at build time, everything else is passed through to the engine.
+set(VELLUM_NAME "cstrike" CACHE STRING "Wrapper edition: cstrike, svencoop, ...")
+set(VELLUM_GAME "" CACHE STRING "Game directory the wrapper starts (default: same as the edition name)")
+set(VELLUM_APPID "" CACHE STRING "Steam AppId of the game (default: 10)")
 
-    set(CSTRIKE_RES "${CMAKE_CURRENT_BINARY_DIR}/cstrike.res")
+if(VELLUM_GAME STREQUAL "")
+    set(VELLUM_GAME "${VELLUM_NAME}")
+endif()
+if(VELLUM_APPID STREQUAL "")
+    set(VELLUM_APPID "10")
+endif()
+
+message(STATUS "vellum: wrapper '${VELLUM_NAME}' starts -game ${VELLUM_GAME} (AppId ${VELLUM_APPID})")
+
+if(WIN32)
+    add_executable(${VELLUM_NAME} WIN32 main.cpp)
+
+    # The icon lives in res/<edition>.rc; editions without one fall back to
+    # the cstrike icon.
+    set(VELLUM_RC "${CMAKE_SOURCE_DIR}/res/${VELLUM_NAME}.rc")
+    if(NOT EXISTS "${VELLUM_RC}")
+        set(VELLUM_RC "${CMAKE_SOURCE_DIR}/res/cstrike.rc")
+    endif()
+
+    set(VELLUM_RES "${CMAKE_CURRENT_BINARY_DIR}/${VELLUM_NAME}.res")
     add_custom_command(
-        OUTPUT "${CSTRIKE_RES}"
-        COMMAND "${CMAKE_RC_COMPILER}" /nologo /i "${CMAKE_SOURCE_DIR}/res" /fo "${CSTRIKE_RES}" "${CMAKE_SOURCE_DIR}/res/cstrike.rc"
-        DEPENDS "${CMAKE_SOURCE_DIR}/res/cstrike.rc" "${CMAKE_SOURCE_DIR}/res/cstrike.ico"
-        COMMENT "Embedding cstrike.ico"
+        OUTPUT "${VELLUM_RES}"
+        COMMAND "${CMAKE_RC_COMPILER}" /nologo /i "${CMAKE_SOURCE_DIR}/res" /fo "${VELLUM_RES}" "${VELLUM_RC}"
+        DEPENDS "${VELLUM_RC}"
+        COMMENT "Embedding the wrapper icon"
         VERBATIM
     )
-    target_sources(cstrike PRIVATE "${CSTRIKE_RES}")
-    set_source_files_properties("${CSTRIKE_RES}" PROPERTIES EXTERNAL_OBJECT TRUE GENERATED TRUE)
-    target_link_libraries(cstrike PRIVATE advapi32 shell32 user32)
-    target_compile_definitions(cstrike PRIVATE _CRT_SECURE_NO_WARNINGS)
+    target_sources(${VELLUM_NAME} PRIVATE "${VELLUM_RES}")
+    set_source_files_properties("${VELLUM_RES}" PROPERTIES EXTERNAL_OBJECT TRUE GENERATED TRUE)
+    target_link_libraries(${VELLUM_NAME} PRIVATE advapi32 shell32 user32)
+    target_compile_definitions(${VELLUM_NAME} PRIVATE _CRT_SECURE_NO_WARNINGS)
 else()
-    add_executable(cstrike main_linux.cpp)
+    add_executable(${VELLUM_NAME} main_linux.cpp)
 endif()
+
+target_compile_definitions(${VELLUM_NAME} PRIVATE
+    VELLUM_NAME="${VELLUM_NAME}"
+    VELLUM_GAME="${VELLUM_GAME}"
+    VELLUM_APPID="${VELLUM_APPID}")
 
 if(REVLOADER_STANDALONE)
     if(HL_DIR STREQUAL "")
@@ -25,30 +61,30 @@ if(REVLOADER_STANDALONE)
     if(NOT EXISTS "${HL_DIR}/src/launcher.cpp")
         message(FATAL_ERROR "HL_DIR=${HL_DIR} does not contain src/launcher.cpp")
     endif()
-    target_sources(cstrike PRIVATE "${HL_DIR}/src/launcher.cpp")
-    target_include_directories(cstrike PRIVATE "${HL_DIR}/src")
-    target_compile_definitions(cstrike PRIVATE REVLOADER_STANDALONE)
+    target_sources(${VELLUM_NAME} PRIVATE "${HL_DIR}/src/launcher.cpp")
+    target_include_directories(${VELLUM_NAME} PRIVATE "${HL_DIR}/src")
+    target_compile_definitions(${VELLUM_NAME} PRIVATE REVLOADER_STANDALONE)
     message(STATUS "vellum standalone: using hl sources from ${HL_DIR}")
     if(NOT WIN32)
-        target_link_libraries(cstrike PRIVATE dl)
+        target_link_libraries(${VELLUM_NAME} PRIVATE dl)
     endif()
-    if(HL_METAHHOOK)
+    if(HL_METAHOOK)
         if(METAHOOK_DIR STREQUAL "")
             set(METAHOOK_DIR "${HL_DIR}/../metahook")
         endif()
         include("${HL_DIR}/cmake/MetaHookEmbed.cmake")
-        hl_embed_metahook(cstrike "${METAHOOK_DIR}")
+        hl_embed_metahook(${VELLUM_NAME} "${METAHOOK_DIR}")
     endif()
 elseif(NOT WIN32)
-    target_link_options(cstrike PRIVATE -static -static-libstdc++ -static-libgcc)
+    target_link_options(${VELLUM_NAME} PRIVATE -static -static-libstdc++ -static-libgcc)
 endif()
 
 if (MSVC)
-    target_compile_options(cstrike PRIVATE /utf-8)
+    target_compile_options(${VELLUM_NAME} PRIVATE /utf-8)
 endif()
 if(WIN32)
-    set(_cstrike_out cstrike)
+    set(_vellum_out ${VELLUM_NAME})
 else()
-    set(_cstrike_out cstrike_linux)
+    set(_vellum_out ${VELLUM_NAME}_linux)
 endif()
-set_target_properties(cstrike PROPERTIES OUTPUT_NAME "${_cstrike_out}" RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
+set_target_properties(${VELLUM_NAME} PROPERTIES OUTPUT_NAME "${_vellum_out}" RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")

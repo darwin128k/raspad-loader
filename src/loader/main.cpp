@@ -8,15 +8,32 @@
 #include "launcher.h"
 #endif
 
-/* Vellum loader: this process is Steam, then spawn hl.exe -game cstrike
- * (or run GoldSrc here if REVLOADER_STANDALONE). No rev.ini, no steam.dll. */
+/* Vellum loader: this process is Steam, then spawn hl.exe -game <game>
+ * (or run GoldSrc here if REVLOADER_STANDALONE). No rev.ini, no steam.dll.
+ *
+ * One source, one wrapper per game: cstrike.exe starts Counter-Strike, a
+ * separate build of the same source starts Sven Co-op.  The edition is
+ * picked at build time, so every wrapper knows its own name, its own game
+ * directory, its own Steam AppId and its own instance mutex.
+ */
+
+#ifndef VELLUM_NAME
+#define VELLUM_NAME "cstrike"
+#endif
+#ifndef VELLUM_GAME
+#define VELLUM_GAME VELLUM_NAME
+#endif
+#ifndef VELLUM_APPID
+#define VELLUM_APPID "10"
+#endif
 
 #define STEAM_IPC_MAPPING_NAME "Local\\SteamStart_SharedMemFile"
 #define STEAM_IPC_EVENT_NAME   "Local\\SteamStart_SharedMemLock"
 #define STEAM_IPC_SIZE         0x400
 #define ACTIVE_PROCESS_KEY     "Software\\Valve\\Steam\\ActiveProcess"
-#define LOADER_MUTEX_NAME      "Local\\Vellum_cstrike"
-#define DEFAULT_PROC           "hl.exe -game cstrike"
+#define LOADER_MUTEX_NAME      "Local\\Vellum_" VELLUM_NAME
+#define DEFAULT_PROC           "hl.exe -game " VELLUM_GAME
+#define DEFAULT_GAME_ARG       "-game " VELLUM_GAME
 
 struct SteamIpc {
     HANDLE mapping;
@@ -84,29 +101,6 @@ static int HasArg(const char *cmd, const char *arg)
         p += n;
     }
     return 0;
-}
-
-static void AppendLaunchTail(char *cmd, size_t cmdSize, const char *procName)
-{
-    const char *rest = procName;
-
-    if (rest[0] == '"') {
-        rest = strchr(rest + 1, '"');
-        if (rest == NULL) {
-            return;
-        }
-        rest++;
-    } else {
-        while (*rest != '\0' && *rest != ' ' && *rest != '\t') {
-            rest++;
-        }
-    }
-    while (*rest == ' ' || *rest == '\t') {
-        rest++;
-    }
-    if (*rest != '\0') {
-        AppendArg(cmd, cmdSize, rest);
-    }
 }
 
 /* steam_api!SteamAPI_IsSteamRunning: OpenProcess(ActiveProcess\pid) and
@@ -193,7 +187,7 @@ static void TeardownSteamIpc(SteamIpc *ipc)
     memset(ipc, 0, sizeof(*ipc));
 }
 
-#define DEFAULT_STEAM_APPID "10"
+#define DEFAULT_STEAM_APPID VELLUM_APPID
 
 static int ReadSteamAppId(const char *dir, char *out, size_t outSize)
 {
@@ -299,6 +293,11 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int show)
                 WideToAnsi(argvW[++i], procName, sizeof(procName));
             } else if (_wcsicmp(argvW[i], L"-appid") == 0 && i + 1 < argc) {
                 WideToAnsi(argvW[++i], appId, sizeof(appId));
+            } else if (_wcsicmp(argvW[i], L"-game") == 0 && i + 1 < argc) {
+                /* This wrapper belongs to one game, fixed at build time.
+                 * A "-game" from the caller is dropped so it cannot start
+                 * something else behind our back. */
+                i++;
             } else {
                 char arg[512];
                 WideToAnsi(argvW[i], arg, sizeof(arg));
@@ -353,45 +352,37 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int show)
 #ifdef REVLOADER_STANDALONE
     {
         char engineCmd[4096];
-        char rawCmdLine[4096];
         int rc;
 
-        _snprintf(rawCmdLine, sizeof(rawCmdLine), "%s", GetCommandLineA());
-        rawCmdLine[sizeof(rawCmdLine) - 1] = '\0';
+        /* Our own command line: the caller's arguments (minus -game, which
+         * this wrapper owns) plus the game this build was made for. */
+        {
+            char selfPath[MAX_PATH];
 
-        _snprintf(engineCmd, sizeof(engineCmd), "%s", GetCommandLineA());
-        engineCmd[sizeof(engineCmd) - 1] = '\0';
-        if (procName[0] != '\0' && !HasArg(engineCmd, "-game")) {
-            AppendLaunchTail(engineCmd, sizeof(engineCmd), procName);
+            GetModuleFileNameA(NULL, selfPath, sizeof(selfPath));
+            selfPath[sizeof(selfPath) - 1] = '\0';
+            _snprintf(engineCmd, sizeof(engineCmd), "\"%s\"", selfPath);
+            engineCmd[sizeof(engineCmd) - 1] = '\0';
         }
-        if (!HasArg(engineCmd, "-game")) {
-            AppendArg(engineCmd, sizeof(engineCmd), "-game cstrike");
+        if (extraArgs[0] != '\0') {
+            AppendArg(engineCmd, sizeof(engineCmd), extraArgs);
         }
+        AppendArg(engineCmd, sizeof(engineCmd), DEFAULT_GAME_ARG);
 
-        /* If this process's own OS-level command line has no -game (the
-         * normal case: user double-clicked cstrike.exe with no arguments),
+        /* If this process's own OS-level command line does not carry that
+         * -game (the normal case: the user double-clicked the wrapper),
          * running the engine in this same process leaves GetCommandLineA()
-         * without -game. Code inside hw.dll/steam_api that reads the real
+         * without it. Code inside hw.dll/steam_api that reads the real
          * process command line directly -- not the string we pass to
          * engine->Run() below -- then sees no mod and falls back to the
          * base game's "valve" paths for some things (observed: downloaded
          * maps landing in valve_downloads instead of cstrike_downloads,
          * so the engine never finds them and re-downloads every time).
-         * Fix: re-exec ourselves with the real, full command line so the
+         * Fix: re-exec ourselves with the command line we built, so the
          * process that actually runs the engine has -game in its true
          * argv, and just wait for that one. */
-        if (!HasArg(rawCmdLine, "-game")) {
-            char selfPath[MAX_PATH];
-            char selfCmd[4096];
-
-            GetModuleFileNameA(NULL, selfPath, sizeof(selfPath));
-            selfPath[sizeof(selfPath) - 1] = '\0';
-
-            _snprintf(selfCmd, sizeof(selfCmd), "\"%s\"", selfPath);
-            selfCmd[sizeof(selfCmd) - 1] = '\0';
-            AppendLaunchTail(selfCmd, sizeof(selfCmd), engineCmd);
-
-            rc = RunChild(selfCmd) ? 0 : 1;
+        if (!HasArg(GetCommandLineA(), DEFAULT_GAME_ARG)) {
+            rc = RunChild(engineCmd) ? 0 : 1;
             WriteSteamAppId(dir, appId);
             TeardownSteamIpc(&ipc);
             return rc;
