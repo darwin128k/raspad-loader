@@ -15,6 +15,7 @@
 
 static char g_cfg_masters[VELLUM_CFG_MAX_MASTERS][512];
 static int g_cfg_master_n;
+static int g_cfg_internet = 1;
 static int g_cfg_loaded;
 
 void Vellum_GameDir(char *dir, size_t dirSize)
@@ -99,6 +100,22 @@ static void Vellum_ConfigParseMasters(char *value)
 	}
 }
 
+static int Vellum_ConfigParseBool(const char *value, int fallback)
+{
+	if (value == NULL || value[0] == '\0') {
+		return fallback;
+	}
+	if (strcmp(value, "0") == 0 || strcmp(value, "off") == 0 ||
+	    strcmp(value, "false") == 0 || strcmp(value, "no") == 0) {
+		return 0;
+	}
+	if (strcmp(value, "1") == 0 || strcmp(value, "on") == 0 ||
+	    strcmp(value, "true") == 0 || strcmp(value, "yes") == 0) {
+		return 1;
+	}
+	return fallback;
+}
+
 void Vellum_ConfigLoad(void)
 {
 	char dir[512];
@@ -111,6 +128,7 @@ void Vellum_ConfigLoad(void)
 	}
 	g_cfg_loaded = 1;
 	g_cfg_master_n = 0;
+	g_cfg_internet = 1;
 
 	Vellum_GameDir(dir, sizeof(dir));
 #ifdef _WIN32
@@ -122,7 +140,7 @@ void Vellum_ConfigLoad(void)
 
 	f = fopen(path, "r");
 	if (f == NULL) {
-		Vellum_Log("config: no %s - no master configured", path);
+		Vellum_Log("config: no %s - internet on, no master configured", path);
 		return;
 	}
 
@@ -147,11 +165,19 @@ void Vellum_ConfigLoad(void)
 
 		if (strcmp(key, "masters") == 0) {
 			Vellum_ConfigParseMasters(value);
+		} else if (strcmp(key, "internet") == 0) {
+			g_cfg_internet = Vellum_ConfigParseBool(value, 1);
 		}
 	}
 	fclose(f);
 
-	Vellum_Log("config: %s, masters=%d", path, g_cfg_master_n);
+	Vellum_Log("config: %s, internet=%d masters=%d", path, g_cfg_internet, g_cfg_master_n);
+}
+
+int Vellum_ConfigInternetEnabled(void)
+{
+	Vellum_ConfigLoad();
+	return g_cfg_internet;
 }
 
 int Vellum_ConfigMasterCount(void)

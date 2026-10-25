@@ -16,6 +16,7 @@ if errorlevel 1 (
 set BUILD_TYPE=Release
 set STANDALONE=OFF
 set METAHHOOK=OFF
+set NOBROWSER=OFF
 set "HL_DIR="
 
 :parse_args
@@ -42,6 +43,11 @@ if /I "%~1"=="metahook" (
 )
 if /I "%~1"=="nometahook" (
     set METAHHOOK=OFF
+    shift
+    goto parse_args
+)
+if /I "%~1"=="nobrowser" (
+    set NOBROWSER=ON
     shift
     goto parse_args
 )
@@ -82,7 +88,7 @@ set APPID=%~3
 call :builddir
 if not exist "%BUILDDIR%" mkdir "%BUILDDIR%"
 pushd "%BUILDDIR%"
-cmake -G "Ninja" -DCMAKE_BUILD_TYPE=%BUILD_TYPE% -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl -DREVLOADER_STANDALONE=%STANDALONE% -DHL_METAHHOOK=%METAHHOOK% -DHL_DIR="%HL_DIR%" -DVELLUM_NAME="%NAME%" -DVELLUM_GAME="%GAME%" -DVELLUM_APPID="%APPID%" "%SRCDIR%"
+cmake -G "Ninja" -DCMAKE_BUILD_TYPE=%BUILD_TYPE% -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl -DVELLUM_STANDALONE=%STANDALONE% -DHL_METAHHOOK=%METAHHOOK% -DVELLUM_NO_SERVER_BROWSER=%NOBROWSER% -DHL_DIR="%HL_DIR%" -DVELLUM_NAME="%NAME%" -DVELLUM_GAME="%GAME%" -DVELLUM_APPID="%APPID%" "%SRCDIR%"
 if errorlevel 1 (
     popd
     exit /b 1

@@ -60,7 +60,7 @@ endif()
 
 if(VELLUM_NO_SERVER_BROWSER)
     target_compile_definitions(steamclient PRIVATE VELLUM_NO_SERVER_BROWSER)
-    message(STATUS "vellum: Internet server browser disabled")
+    message(STATUS "vellum: Internet master query compiled out")
 endif()
 
 set_target_properties(steamclient PROPERTIES

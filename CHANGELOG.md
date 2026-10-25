@@ -9,6 +9,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`internet` in `config/vellum.cfg`.** `internet = 0` (also `off` / `false` /
+  `no`) skips master queries at runtime; favorites and LAN are unchanged. No
+  second branch is needed to ship a client without an Internet list.
+- **`build.bat nobrowser` / `build.sh nobrowser`** — same as
+  `-DVELLUM_NO_SERVER_BROWSER=ON`, compiles the Internet query out.
+
+### Changed
+
+- **One line of history.** `master` is the only development branch. **v1.0.0**
+  tags the last commit before Vellum v2 tickets; **v2.0.0** tags the first
+  configurable-master + Ed25519 + Sven Co-op line. Both snapshots stay in git
+  (checkout the tag); they are not parallel forks.
+- CMake option `VELLUM_STANDALONE` replaces `REVLOADER_STANDALONE` (the old
+  name is still accepted).
+
+### Removed
+
+- Leftover RevEmu 2013 sources (`revemu2013.cpp` / `.h`) that were already
+  unused after v2 tickets.
+
+## [2.0.0] - 2026-10-24
+
+### Added
+
 - **One wrapper per game.** The loader is now built once per game, and every
   edition carries its own name, game directory, Steam AppId, icon and instance
   mutex:
@@ -73,3 +97,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `cl` (C sources are now part of the build).
 - New editions: add a line to `build.bat` (name, game directory, AppId) and
   drop `res/<name>.rc` + `res/<name>.ico` next to the cstrike ones.
+
+## [1.0.0] - 2026-09-18
+
+Last snapshot of the pre-crypto line (RevLoader renamed to Vellum, optional
+HTTP master list, `VELLUM_NO_SERVER_BROWSER`, RevEmu 2013 still in tree).
+See git at tag `v1.0.0`.
