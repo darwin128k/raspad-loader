@@ -1,4 +1,4 @@
-name: Raspad Loader builds
+name: Loader builds
 
 on:
   push:
@@ -35,7 +35,7 @@ jobs:
       - name: Upload archives and checksums
         uses: actions/upload-artifact@v4
         with:
-          name: raspad-loader-windows-x86-${{ matrix.auth }}
+          name: loader-windows-x86-${{ matrix.auth }}
           path: dist/*
           if-no-files-found: error
           retention-days: 30
@@ -65,7 +65,7 @@ jobs:
       - name: Upload archives and checksums
         uses: actions/upload-artifact@v4
         with:
-          name: raspad-loader-linux-x86-${{ matrix.auth }}
+          name: loader-linux-x86-${{ matrix.auth }}
           path: dist/*
           if-no-files-found: error
           retention-days: 30
@@ -85,7 +85,7 @@ jobs:
           persist-credentials: false
       - uses: actions/download-artifact@v4
         with:
-          pattern: raspad-loader-*
+          pattern: loader-*
           path: dist
           merge-multiple: true
       - name: Generate release changelog
@@ -100,11 +100,11 @@ jobs:
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
           if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            gh release edit "$RELEASE_TAG" --title "Raspad Loader $RELEASE_TAG" --notes-file release-notes.md
+            gh release edit "$RELEASE_TAG" --title "Loader $RELEASE_TAG" --notes-file release-notes.md
           else
             flags=()
             if [[ "$RELEASE_TAG" == *-* ]]; then flags+=(--prerelease); fi
-            gh release create "$RELEASE_TAG" --draft --verify-tag --title "Raspad Loader $RELEASE_TAG" --notes-file release-notes.md "${flags[@]}"
+            gh release create "$RELEASE_TAG" --draft --verify-tag --title "Loader $RELEASE_TAG" --notes-file release-notes.md "${flags[@]}"
           fi
           gh release upload "$RELEASE_TAG" dist/* --clobber
           gh release edit "$RELEASE_TAG" --draft=false

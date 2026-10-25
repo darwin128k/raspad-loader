@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Name the product Raspad Loader; reserve Vellum for the auth protocol. Use `config/loader.cfg` and `loader.log`; keep previous config names as read-only fallbacks.
+- Name the product Loader; reserve Vellum for the auth protocol. Use `config/loader.cfg` and `loader.log`; keep previous config names as read-only fallbacks.
 
 - Compile only the selected auth implementation, including its listen-server parser and dependencies. Rename runtime master settings to `config/masterservers.cfg`; `vellum.cfg` remains a fallback for existing deployments.
 

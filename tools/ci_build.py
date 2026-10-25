@@ -22,13 +22,13 @@ def run(*args):
 
 
 def package(build, platform, auth, game, version, output):
-    name = f"raspad-loader-{game}-{platform}-x86-{auth}-{version}"
+    name = f"loader-{game}-{platform}-x86-{auth}-{version}"
     loader = f"{game}.exe" if platform == "windows" else f"{game}_linux"
     client = "steamclient.dll" if platform == "windows" else "steamclient.so"
     suffix = ".zip" if platform == "windows" else ".tar.gz"
     output.mkdir(parents=True, exist_ok=True)
     archive = output / (name + suffix)
-    with tempfile.TemporaryDirectory(prefix="raspad-loader-package-") as tmp:
+    with tempfile.TemporaryDirectory(prefix="loader-package-") as tmp:
         stage = Path(tmp)
         for binary in (loader, client):
             shutil.copy2(build / binary, stage / binary)
@@ -51,7 +51,7 @@ def package(build, platform, auth, game, version, output):
                    "  sudo apt update\n"
                    "  sudo apt install libopus0:i386 libasound2:i386 libcurl4:i386\n")
         (stage / "README.txt").write_text(
-            f"Raspad Loader {version} / {game} / {platform} x86 / auth: {auth}\n\n"
+            f"Loader {version} / {game} / {platform} x86 / auth: {auth}\n\n"
             f"Extract these files beside {engine} in your game installation.\n"
             f"Start {loader}; it launches {engine} -game {game}.\n"
             "This archive contains the game wrapper and steamclient.\n"

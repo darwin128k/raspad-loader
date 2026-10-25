@@ -15,7 +15,7 @@
 #include <signal.h>
 #include <unistd.h>
 
-/* Raspad Loader for native Linux GoldSrc. SteamAPI_Init dlopens
+/* Loader for native Linux GoldSrc. SteamAPI_Init dlopens
  * $HOME/.steam/sdk32/steamclient.so by absolute path (not LD_LIBRARY_PATH),
  * so we point HOME at a private .vellum-home that symlinks our steamclient.
  * LD_LIBRARY_PATH still has the game dir plus Steam Runtime i386 libs (GTK2/CEF).

@@ -1,5 +1,9 @@
+<p align="center">
+  <img src="assets/logo.png" alt="Loader" width="260">
+</p>
+
 <h1 align="center">
-  <b>Raspad Loader</b>
+  <b>Loader</b>
 </h1>
 
 <p align="center">
@@ -19,7 +23,7 @@ Two targets, Windows and Linux:
 
 No `rev.ini`, no `steam.dll`, no MetaHook/MetaVoice/MetaAudio. Copy the two binaries next to `hl.exe` / `hl_linux` and run the loader.
 
-Raspad Loader starts the `hl.exe` / `hl_linux` from your game installation.
+Loader starts the `hl.exe` / `hl_linux` from your game installation.
 Standalone builds can instead compile launcher sources supplied through `HL_DIR`.
 Vellum is an authentication protocol supported by the loader, alongside RevEmu 2013.
 
@@ -86,7 +90,7 @@ disable the Internet list without a config file, compile with
 
 ## Download automatic builds
 
-GitHub Actions **Raspad Loader builds** runs on pushes, pull requests, and manual dispatch.
+GitHub Actions **Loader builds** runs on pushes, pull requests, and manual dispatch.
 Open a successful run under **Actions**, then download its **Artifacts**. There are
 four artifact bundles: Windows/Linux x86, each with Vellum v2 or RevEmu 2013 auth.
 To disable an auth variant in CI, remove it from `matrix.auth` in both OS jobs in

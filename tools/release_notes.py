@@ -56,7 +56,7 @@ def render(tag, repository, previous, records):
     release = f'{base}/releases/tag/{quote(tag, safe="")}'
     compare = (f'{base}/compare/{quote(previous, safe="")}...{quote(tag, safe="")}'
                if previous else f'{base}/commits/{quote(tag, safe="")}')
-    lines = [f'Raspad Loader **{text(tag)}**', '', '## Highlights', '']
+    lines = [f'Loader **{text(tag)}**', '', '## Highlights', '']
     # Prefer user-facing changes; use commit subjects without inventing a summary.
     priority = {'feat': 0, 'fix': 1, 'perf': 2, 'build': 3, 'ci': 4}
     ranked = sorted(records, key=lambda r: (-int(r['breaking']), priority.get(r['kind'], 5)))
