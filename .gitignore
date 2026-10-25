@@ -7,3 +7,7 @@ orig/
 /cstrike.exe
 /cstrike_linux
 /steamclient.dll
+
+build-ci/
+dist/
+__pycache__/

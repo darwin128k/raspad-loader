@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Download archives include the HL launcher built from `HL_DIR` / `raspad-hl`.
+
+- GitHub Actions builds Windows and Debian-compatible Linux x86 archives for both games and both auth modes, with smoke tests, example config, licenses, and SHA-256 checksums. Tags starting with `v` publish the archives to GitHub Releases.
+
 - Restored optional RevEmu 2013 tickets and legacy identity with `VELLUM_AUTH_REVEMU2013` / `revemu2013` in both build scripts. Vellum v2 remains the default. Listen servers recognize both ticket layouts.
 
 - **`internet` in `config/vellum.cfg`.** `internet = 0` (also `off` / `false` /
@@ -18,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `-DVELLUM_NO_SERVER_BROWSER=ON`, compiles the Internet query out.
 
 ### Changed
+
+- Preserve quoted launch arguments on Windows and literal shell arguments on Linux, reject oversized command lines, and avoid dropping arguments after the old Linux standalone 64-token limit.
 
 - **One line of history.** `master` is the only development branch. **v1.0.0**
   tags the last commit before Vellum v2 tickets; **v2.0.0** tags the first
