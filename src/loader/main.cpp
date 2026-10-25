@@ -9,7 +9,7 @@
 #include "launcher.h"
 #endif
 
-/* Vellum loader: this process is Steam, then spawn hl.exe -game <game>
+/* Raspad Loader: this process is Steam, then spawn hl.exe -game <game>
  * (or run GoldSrc here if REVLOADER_STANDALONE). No rev.ini, no steam.dll.
  *
  * One source, one wrapper per game: cstrike.exe starts Counter-Strike, a

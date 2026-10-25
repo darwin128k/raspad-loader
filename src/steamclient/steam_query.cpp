@@ -1192,7 +1192,7 @@ static int Vellum_HttpListFetch(VellumHttpList *h, const char *url, char **out, 
 	if (h == NULL || url == NULL || url[0] == '\0') {
 		return 0;
 	}
-	if (!Vellum_NetHttpGet(url, "VellumServerBrowser/1.0", 20, 0, &body, &n, &status, &h->abort) ||
+	if (!Vellum_NetHttpGet(url, "RaspadLoader/1.0", 20, 0, &body, &n, &status, &h->abort) ||
 	    body == NULL) {
 		free(body);
 		return 0;

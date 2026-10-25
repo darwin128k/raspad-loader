@@ -22,13 +22,13 @@ def run(*args):
 
 
 def package(build, platform, auth, game, version, output):
-    name = f"vellum-{game}-{platform}-x86-{auth}-{version}"
+    name = f"raspad-loader-{game}-{platform}-x86-{auth}-{version}"
     loader = f"{game}.exe" if platform == "windows" else f"{game}_linux"
     client = "steamclient.dll" if platform == "windows" else "steamclient.so"
     suffix = ".zip" if platform == "windows" else ".tar.gz"
     output.mkdir(parents=True, exist_ok=True)
     archive = output / (name + suffix)
-    with tempfile.TemporaryDirectory(prefix="vellum-package-") as tmp:
+    with tempfile.TemporaryDirectory(prefix="raspad-loader-package-") as tmp:
         stage = Path(tmp)
         for binary in (loader, client):
             shutil.copy2(build / binary, stage / binary)
@@ -42,7 +42,7 @@ def package(build, platform, auth, game, version, output):
             shutil.copy2(build / "_deps/opus-src/COPYING", licenses / "Opus.txt")
         config = stage / "config"
         config.mkdir()
-        shutil.copy2(ROOT / "config/masterservers.cfg.example", config / "masterservers.cfg.example")
+        shutil.copy2(ROOT / "config/loader.cfg.example", config / "loader.cfg.example")
         engine = "hl.exe" if platform == "windows" else "hl_linux"
         runtime = ("No separate Visual C++ runtime is required.\n" if platform == "windows" else
                    "Built on Debian 12 for 32-bit x86 (glibc 2.36 or newer).\n"
@@ -51,7 +51,7 @@ def package(build, platform, auth, game, version, output):
                    "  sudo apt update\n"
                    "  sudo apt install libopus0:i386 libasound2:i386 libcurl4:i386\n")
         (stage / "README.txt").write_text(
-            f"Vellum {version} / {game} / {platform} x86 / auth: {auth}\n\n"
+            f"Raspad Loader {version} / {game} / {platform} x86 / auth: {auth}\n\n"
             f"Extract these files beside {engine} in your game installation.\n"
             f"Start {loader}; it launches {engine} -game {game}.\n"
             "This archive contains the game wrapper and steamclient.\n"
@@ -60,7 +60,7 @@ def package(build, platform, auth, game, version, output):
             + runtime + "\n"
             "Vellum auth uses the per-user profile key. RevEmu 2013 uses the legacy machine identity.\n"
             "The auth dialect cannot be switched in the config; use the matching archive.\n\n"
-            "Optional settings: copy config/masterservers.cfg.example to config/masterservers.cfg.\n"
+            "Optional settings: copy config/loader.cfg.example to config/loader.cfg.\n"
             "No master configured means the Internet server list stays empty.\n"
             "Favorites/history use config/serverbrowser.vdf. Existing configs are not bundled.\n",
             encoding="utf-8")

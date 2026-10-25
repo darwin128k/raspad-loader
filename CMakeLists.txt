@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(vellum LANGUAGES C CXX)
+project(raspad_loader LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
@@ -8,11 +8,11 @@ if(WIN32)
     enable_language(RC)
 elseif(UNIX AND NOT APPLE)
     # GoldSrc client is 32-bit. Match steam_api.so / hw.so and raspad-hl.
-    message(STATUS "vellum: targeting 32-bit Linux (hw.so)")
+    message(STATUS "loader: targeting 32-bit Linux (hw.so)")
     add_compile_options(-m32 -Wno-format-truncation)
     add_link_options(-m32)
 else()
-    message(FATAL_ERROR "Vellum supports Windows and Linux")
+    message(FATAL_ERROR "Raspad Loader supports Windows and Linux")
 endif()
 
 option(VELLUM_STANDALONE "Run GoldSrc in this process (compile hl launcher sources from raspad-hl) instead of spawning hl" OFF)

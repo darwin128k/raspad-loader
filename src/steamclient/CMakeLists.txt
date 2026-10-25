@@ -43,7 +43,7 @@ endif()
 if(VELLUM_AUTH_REVEMU2013)
     set(VELLUM_AUTH_SOURCES revemu2013.cpp)
     target_compile_definitions(steamclient PRIVATE VELLUM_AUTH_REVEMU2013)
-    message(STATUS "vellum auth: RevEmu 2013 only")
+    message(STATUS "loader auth: RevEmu 2013 only")
 else()
     set(VELLUM_AUTH_SOURCES
         ${AUTHUM_DIR}/src/client/ed25519.c
@@ -53,7 +53,7 @@ else()
     if(WIN32)
         target_link_libraries(steamclient PRIVATE bcrypt)
     endif()
-    message(STATUS "vellum auth: Vellum v2 only")
+    message(STATUS "loader auth: Vellum v2 only")
 endif()
 target_sources(steamclient PRIVATE ${VELLUM_AUTH_SOURCES})
 
@@ -70,7 +70,7 @@ endif()
 
 if(VELLUM_NO_SERVER_BROWSER)
     target_compile_definitions(steamclient PRIVATE VELLUM_NO_SERVER_BROWSER)
-    message(STATUS "vellum: Internet master query compiled out")
+    message(STATUS "loader: Internet master query compiled out")
 endif()
 
 set_target_properties(steamclient PROPERTIES

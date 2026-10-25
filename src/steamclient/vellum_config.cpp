@@ -135,23 +135,18 @@ void Vellum_ConfigLoad(void)
 	g_cfg_master_n = 0;
 	g_cfg_internet = 1;
 
-	Vellum_GameDir(dir, sizeof(dir));
+    Vellum_GameDir(dir, sizeof(dir));
+    const char *names[] = { "loader.cfg", "masterservers.cfg", "vellum.cfg" };
+    f = NULL;
+    for (size_t i = 0; i < sizeof(names) / sizeof(names[0]); ++i) {
 #ifdef _WIN32
-	_snprintf(path, sizeof(path), "%sconfig\\masterservers.cfg", dir);
+        _snprintf(path, sizeof(path), "%sconfig\\%s", dir, names[i]);
 #else
-	snprintf(path, sizeof(path), "%sconfig/masterservers.cfg", dir);
-#endif
-	path[sizeof(path) - 1] = '\0';
-
-	f = fopen(path, "r");
-    if (f == NULL && errno == ENOENT) {
-#ifdef _WIN32
-        _snprintf(path, sizeof(path), "%sconfig\\vellum.cfg", dir);
-#else
-        snprintf(path, sizeof(path), "%sconfig/vellum.cfg", dir);
+        snprintf(path, sizeof(path), "%sconfig/%s", dir, names[i]);
 #endif
         path[sizeof(path) - 1] = '\0';
         f = fopen(path, "r");
+        if (f != NULL || errno != ENOENT) break;
     }
 	if (f == NULL) {
 		Vellum_Log("config: no %s - internet on, no master configured", path);
