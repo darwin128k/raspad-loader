@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Restored optional RevEmu 2013 tickets and legacy identity with `VELLUM_AUTH_REVEMU2013` / `revemu2013` in both build scripts. Vellum v2 remains the default. Listen servers recognize both ticket layouts.
+
 - **`internet` in `config/vellum.cfg`.** `internet = 0` (also `off` / `false` /
   `no`) skips master queries at runtime; favorites and LAN are unchanged. No
   second branch is needed to ship a client without an Internet list.

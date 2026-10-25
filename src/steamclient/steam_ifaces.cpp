@@ -1,5 +1,6 @@
 ﻿#include "types.h"
 #include "identity.h"
+#include "revemu2013.h"
 #include "exports.h"
 #include "steam_query.h"
 #include "steam_http.h"
@@ -2263,6 +2264,10 @@ static CSteamID Vellum_GameServerSteamId()
 
 static CSteamID Vellum_SteamIdFromAuthBlob(const void *blob, int len)
 {
+	uint32 account;
+	if (RevEmu2013_AccountIdFromTicket(blob, len, &account)) {
+		return CSteamID(account, k_EUniversePublic, k_EAccountTypeIndividual);
+	}
 	if (blob != NULL && len == (int)sizeof(VellumTicket)) {
 		VellumTicket t;
 		memcpy(&t, blob, sizeof(t));
