@@ -1,7 +1,11 @@
 #include "identity.h"
+#ifdef VELLUM_AUTH_REVEMU2013
 #include "revemu2013.h"
+#endif
 
+#ifndef VELLUM_AUTH_REVEMU2013
 #include <authum/crypto/ed25519.h>
+#endif
 
 #include <stdio.h>
 #include <string.h>
@@ -10,7 +14,9 @@
 
 #ifdef _WIN32
 #include <windows.h>
+#ifndef VELLUM_AUTH_REVEMU2013
 #include <bcrypt.h>
+#endif
 #else
 #include <fcntl.h>
 #include <pwd.h>
@@ -30,7 +36,9 @@ void Vellum_Log(const char *fmt, ...);
 #define vellum_snprintf snprintf
 #endif
 
+#ifndef VELLUM_AUTH_REVEMU2013
 static_assert(sizeof(VellumTicket) == 120, "Vellum v2 ticket must stay 120 bytes");
+#endif
 
 static VellumIdentity g_id;
 static int g_ready;
@@ -112,6 +120,7 @@ static void FillPersona(char *persona, size_t personaSize)
 	}
 }
 
+#ifndef VELLUM_AUTH_REVEMU2013
 /* %APPDATA%\Raspad — per Windows user, never inside the game folder: game
  * folders get zipped and shared, and a shared key is a shared SteamID. */
 static int KeyDir(char *dir, size_t dirSize)
@@ -134,6 +143,7 @@ static FILE *OpenKeyForWrite(const char *path)
 {
 	return fopen(path, "w");
 }
+#endif
 #else
 static void FillPersona(char *persona, size_t personaSize)
 {
@@ -147,6 +157,7 @@ static void FillPersona(char *persona, size_t personaSize)
 	}
 }
 
+#ifndef VELLUM_AUTH_REVEMU2013
 /* $XDG_DATA_HOME/raspad or ~/.local/share/raspad, mode 0700. */
 static int KeyDir(char *dir, size_t dirSize)
 {
@@ -189,7 +200,9 @@ static FILE *OpenKeyForWrite(const char *path)
 	return fd >= 0 ? fdopen(fd, "w") : NULL;
 }
 #endif
+#endif
 
+#ifndef VELLUM_AUTH_REVEMU2013
 /* Key file: "vellum-key 1 <64 hex seed>". The seed is the whole secret. */
 static int LoadSeed(const char *path, uint8_t seed[32])
 {
@@ -265,6 +278,8 @@ static void LoadOrCreateKey(VellumIdentity *id)
 	/* key_pair wipes its seed argument. */
 	authum_crypto_ed25519_key_pair(id->secret_key, id->public_key, seed);
 }
+
+#endif
 
 #ifdef VELLUM_AUTH_REVEMU2013
 #ifndef _WIN32

@@ -1,6 +1,10 @@
 #include "identity.h"
+#ifdef VELLUM_AUTH_REVEMU2013
 #include "revemu2013.h"
+#endif
+#ifndef VELLUM_AUTH_REVEMU2013
 #include <authum/crypto/ed25519.h>
+#endif
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>

@@ -42,12 +42,7 @@ def package(build, platform, auth, game, version, output):
             shutil.copy2(build / "_deps/opus-src/COPYING", licenses / "Opus.txt")
         config = stage / "config"
         config.mkdir()
-        (config / "vellum.cfg.example").write_text(
-            "# Copy to vellum.cfg to enable these settings.\n"
-            "# Auth dialect is selected at build time, not in this file.\n"
-            "internet = 1\n"
-            "# Set your own master server addresses; no master is built in.\n"
-            "masters =\n", encoding="utf-8")
+        shutil.copy2(ROOT / "config/masterservers.cfg.example", config / "masterservers.cfg.example")
         engine = "hl.exe" if platform == "windows" else "hl_linux"
         runtime = ("No separate Visual C++ runtime is required.\n" if platform == "windows" else
                    "Built on Debian 12 for 32-bit x86 (glibc 2.36 or newer).\n"
@@ -65,7 +60,7 @@ def package(build, platform, auth, game, version, output):
             + runtime + "\n"
             "Vellum auth uses the per-user profile key. RevEmu 2013 uses the legacy machine identity.\n"
             "The auth dialect cannot be switched in the config; use the matching archive.\n\n"
-            "Optional settings: copy config/vellum.cfg.example to config/vellum.cfg.\n"
+            "Optional settings: copy config/masterservers.cfg.example to config/masterservers.cfg.\n"
             "No master configured means the Internet server list stays empty.\n"
             "Favorites/history use config/serverbrowser.vdf. Existing configs are not bundled.\n",
             encoding="utf-8")

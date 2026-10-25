@@ -5,7 +5,7 @@
 /*
  * Runtime configuration of the steamclient facade.
  *
- * Read once from <game>/config/vellum.cfg:
+ * Read once from <game>/config/masterservers.cfg:
  *
  *   # 0 = do not query masters (Internet tab stays empty).
  *   # Favorites and LAN are unaffected. Default is 1.
@@ -24,7 +24,7 @@
 /* Directory of the game: the folder steamclient.dll was loaded from. */
 void Vellum_GameDir(char *dir, size_t dirSize);
 
-/* Parse <game>/config/vellum.cfg.  Safe to call more than once. */
+/* Parse <game>/config/masterservers.cfg.  Safe to call more than once. */
 void Vellum_ConfigLoad(void);
 
 /* 0 = never query masters, even if a list is present. */

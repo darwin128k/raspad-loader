@@ -28,7 +28,7 @@ if(REVLOADER_STANDALONE)
 endif()
 
 set(AUTHUM_DIR "${CMAKE_SOURCE_DIR}/lib/authum")
-if(NOT EXISTS "${AUTHUM_DIR}/lib/monocypher/monocypher.c")
+if(NOT VELLUM_AUTH_REVEMU2013 AND NOT EXISTS "${AUTHUM_DIR}/lib/monocypher/monocypher.c")
     message(FATAL_ERROR "lib/authum missing - run: git submodule update --init lib/authum")
 endif()
 
