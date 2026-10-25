@@ -67,13 +67,18 @@ Written next to the game / `steamclient` binary.
 **`config/vellum.cfg`** — runtime settings of the facade:
 
 ```
+# 0 = do not query masters at all (Internet tab stays empty).
+# Favorites and LAN keep working. Default is 1.
+internet = 1
+
 # Masters to query for the Internet server list, comma separated.
-# Empty (or no file at all) = no master is queried, the Internet tab stays
-# empty.  Favorites and LAN are unaffected either way.
+# Empty (or no file at all) = no master is queried.
 masters = 10.0.0.5:27010, 10.0.0.6:27010
 ```
 
-No master is baked into the binary: every deployment names its own.
+No master is baked into the binary: every deployment names its own. To
+disable the Internet list without a config file, compile with
+`-DVELLUM_NO_SERVER_BROWSER=ON` or `build.bat nobrowser`.
 
 ## Build
 
@@ -100,6 +105,7 @@ Opus is fetched and linked statically. WinINet / WinMM come with the Windows SDK
 ```bat
 build.bat
 build.bat debug
+build.bat nobrowser
 ```
 
 Standalone (optional `HL_DIR`, default `..\raspad-hl` or `..\hl`):
@@ -138,6 +144,7 @@ sudo apt install libcurl4:i386
 
 ```sh
 ./build.sh
+./build.sh nobrowser
 ./build.sh standalone
 ./build.sh standalone ../raspad-hl
 ```
@@ -163,7 +170,27 @@ One loader instance at a time. Optional `-launch` / `-appid`. Default game is `c
 
 Release builds write no `vellum.log`. Debug (`build.bat debug`) logs a timestamped session: identity, interfaces, connect ticket, master list, and voice tx/rx.
 
-CMake `-DVELLUM_NO_SERVER_BROWSER=ON` compiles the Internet browser out entirely. Default is **OFF**. Favorites and LAN are unaffected.
+## Versions
+
+One branch: `master`. Lineage is tags, not forks.
+
+| Tag | What it is |
+|---|---|
+| **v1.0.0** | Last RevLoader/Vellum line before Ed25519 tickets (baked-in masters still existed in that era) |
+| **v2.0.0** | Vellum v2 tickets, profile key, per-game wrappers (CS 1.6 + Sven Co-op), masters only from config |
+
+v2 is what Sven Co-op was checked against. Checkout the tag if you need that snapshot; keep building from `master`.
+
+## Build options
+
+| CMake / `build.bat` | Effect |
+|---|---|
+| `VELLUM_NAME` / `VELLUM_GAME` / `VELLUM_APPID` | Wrapper edition (cstrike, svencoop, …) |
+| `VELLUM_STANDALONE` / `build.bat standalone` | Compile `hl` launcher into the wrapper |
+| `HL_METAHHOOK` / `build.bat metahook` | Embed MetaHookSv (Windows standalone only) |
+| `VELLUM_NO_SERVER_BROWSER` / `build.bat nobrowser` | Compile out Internet master queries |
+
+CMake `-DVELLUM_NO_SERVER_BROWSER=ON` compiles the Internet query out entirely. Default is **OFF**. Favorites and LAN are unaffected. Runtime `internet = 0` in `vellum.cfg` does the same without a rebuild.
 
 ## License
 

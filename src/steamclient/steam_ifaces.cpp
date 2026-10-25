@@ -1634,13 +1634,17 @@ static void Vellum_MasterLoad()
 	g_master_loaded = 1;
 	g_master_n = 0;
 #ifdef VELLUM_NO_SERVER_BROWSER
-	Vellum_Log("master search disabled");
+	Vellum_Log("master search compiled out");
 	return;
 #endif
 	/* No master is baked in: the deployment names its own in
-	 * <game>/config/vellum.cfg ("masters = host:port, ...").  Without that
-	 * file the Internet tab of the server browser stays empty. */
+	 * <game>/config/vellum.cfg.  internet = 0, or an empty masters list,
+	 * leaves the Internet tab empty. */
 	Vellum_ConfigLoad();
+	if (!Vellum_ConfigInternetEnabled()) {
+		Vellum_Log("internet disabled in config - no master query");
+		return;
+	}
 	for (i = 0; i < Vellum_ConfigMasterCount(); i++) {
 		Vellum_MasterAddAddr(Vellum_ConfigMaster(i));
 	}

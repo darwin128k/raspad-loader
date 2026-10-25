@@ -53,9 +53,9 @@ target_compile_definitions(${VELLUM_NAME} PRIVATE
     VELLUM_GAME="${VELLUM_GAME}"
     VELLUM_APPID="${VELLUM_APPID}")
 
-if(REVLOADER_STANDALONE)
+if(VELLUM_STANDALONE)
     if(HL_DIR STREQUAL "")
-        message(FATAL_ERROR "REVLOADER_STANDALONE=ON requires -DHL_DIR=/path/to/raspad-hl")
+        message(FATAL_ERROR "VELLUM_STANDALONE=ON requires -DHL_DIR=/path/to/raspad-hl")
     endif()
     get_filename_component(HL_DIR "${HL_DIR}" ABSOLUTE)
     if(NOT EXISTS "${HL_DIR}/src/launcher.cpp")

@@ -9,10 +9,12 @@ fi
 rm -f /tmp/vellum-m32-test
 
 STANDALONE=OFF
+NOBROWSER=OFF
 HL_DIR=""
 for arg in "$@"; do
     case "$arg" in
         standalone) STANDALONE=ON ;;
+        nobrowser) NOBROWSER=ON ;;
         metahook|nometahook)
             echo "metahook is Windows-only"
             exit 1
@@ -42,9 +44,9 @@ fi
 mkdir -p build-linux
 cd build-linux
 if [ "$STANDALONE" = ON ]; then
-    cmake -DCMAKE_BUILD_TYPE=Release -DREVLOADER_STANDALONE=ON -DHL_DIR="$HL_DIR" ..
+    cmake -DCMAKE_BUILD_TYPE=Release -DVELLUM_STANDALONE=ON -DVELLUM_NO_SERVER_BROWSER="$NOBROWSER" -DHL_DIR="$HL_DIR" ..
 else
-    cmake -DCMAKE_BUILD_TYPE=Release -DREVLOADER_STANDALONE=OFF ..
+    cmake -DCMAKE_BUILD_TYPE=Release -DVELLUM_STANDALONE=OFF -DVELLUM_NO_SERVER_BROWSER="$NOBROWSER" ..
 fi
 cmake --build .
 if [ "$STANDALONE" = ON ]; then
