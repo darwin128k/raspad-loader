@@ -52,10 +52,10 @@ and dropping `res/<name>.rc` + `res/<name>.ico` next to the cstrike ones.
 ## What steamclient implements
 
 - **SteamClient012 / 017 / 020** — enough of `CreateInterface` for GoldSrc 8684 and Steam Half-Life (Oct 2024 / 10210+).
-- **Auth** — 120-byte Vellum v2 ticket (`VLLM`), Ed25519-signed for the server address the engine dials and the local clock; checked by [qproto](https://github.com/darwin128k/raspad-qproto) 2.x. Optional RevEmu 2013 tickets are available with `build.bat revemu2013` / `./build.sh revemu2013` or CMake `-DVELLUM_AUTH_REVEMU2013=ON`. Vellum v2 remains the default; one outgoing dialect is selected per build. Ed25519 comes from [Authum](https://github.com/darwin128k/raspad-authum) (`lib/authum` submodule, vendored Monocypher).
+- **Auth** — 120-byte Vellum v2 ticket (`VLLM`), Ed25519-signed for the server address the engine dials and the local clock; checked by [qproto](https://github.com/darwin128k/raspad-qproto) 2.x. Optional RevEmu 2013 tickets are available with `build.bat revemu2013` / `./build.sh revemu2013` or CMake `-DVELLUM_AUTH_REVEMU2013=ON`. Vellum v2 remains the default; only the selected implementation is compiled and linked. Ed25519 comes from [Authum](https://github.com/darwin128k/raspad-authum) (`lib/authum` submodule, vendored Monocypher).
 - **RevEmu 2013 identity** uses the legacy Windows C: volume serial / Linux machine-id, without the Vellum profile key. Build without `revemu2013` to return to Vellum v2.
 - **Identity** — persona is the OS user name. The SteamID comes from a key pair created on first run and kept in the user profile (Windows: `%APPDATA%\Raspad\vellum.key`; Linux: `$XDG_DATA_HOME/raspad/vellum.key` or `~/.local/share/raspad/vellum.key`, mode 0600). Never in the game folder — copy that key and you copy the SteamID. Nothing about the machine (hostname, disk serial) is sent.
-- **Server browser** — favorites/history via `config/serverbrowser.vdf`. The Internet list comes from the masters named in `config/vellum.cfg`; with no master configured the tab stays empty. LAN is UDP broadcast. Game/map/ping are filled with A2S.
+- **Server browser** — favorites/history via `config/serverbrowser.vdf`. The Internet list comes from the masters named in `config/masterservers.cfg`; with no master configured the tab stays empty. LAN is UDP broadcast. Game/map/ping are filled with A2S.
 - **HTTP** — real `ISteamHTTP` for FastDL and list fetches (WinINet on Windows, libcurl on Linux).
 - **Voice** — `ISteamUser` capture/encode/decode. Microphone opens only while `+voicerecord` is held. Packets are Steam Voice Opus (24 kHz), so other Vellum/Steam-format clients can hear you. No extra voice plugin.
 
@@ -65,7 +65,12 @@ Written next to the game / `steamclient` binary.
 
 **`config/serverbrowser.vdf`** — favorites and history, same layout as stock GoldSrc. The Internet tab does not read a VDF.
 
-**`config/vellum.cfg`** — runtime settings of the facade:
+The auth dialect is selected only at build time. The other implementation is
+excluded from the binary, including its listen-server parser. There is no runtime
+auth setting. Existing `config/vellum.cfg` is read only when `masterservers.cfg`
+is absent; the new file takes precedence.
+
+**`config/masterservers.cfg`** — runtime settings of the facade:
 
 ```
 # 0 = do not query masters at all (Internet tab stays empty).
@@ -86,11 +91,16 @@ disable the Internet list without a config file, compile with
 GitHub Actions **Build downloads** runs on pushes, pull requests, and manual dispatch.
 Open a successful run under **Actions**, then download its **Artifacts**. There are
 four artifact bundles: Windows/Linux x86, each with Vellum v2 or RevEmu 2013 auth.
+To disable an auth variant in CI, remove it from `matrix.auth` in both OS jobs in
+`.github/workflows/build.yml` (for example, `[vellum]` builds Vellum only).
+Local scripts accept `vellum` or `revemu2013`; plain invocation defaults to Vellum.
+CMake `VELLUM_AUTH_REVEMU2013=OFF` selects Vellum exclusively; `ON` selects RevEmu exclusively.
+
 Each bundle contains separate archives for Counter-Strike 1.6 and Sven Co-op plus
 SHA-256 checksums. Windows downloads are ZIP; Linux downloads are tar.gz.
 
 Archives include the game wrapper, steamclient, instructions, licenses, and
-`config/vellum.cfg.example`. Existing configs are preserved. `hl.exe` / `hl_linux`, game data, and engine libraries
+`config/masterservers.cfg.example`. Existing configs are preserved. `hl.exe` / `hl_linux`, game data, and engine libraries
 are required separately. Select one auth variant per installation; auth is chosen
 at build time. Vellum v2 is the default for local builds.
 
@@ -217,7 +227,7 @@ v2 is what Sven Co-op was checked against. Checkout the tag if you need that sna
 | `VELLUM_AUTH_REVEMU2013` / `build.bat revemu2013` | Use RevEmu 2013 authentication (default OFF, Vellum v2) |
 | `VELLUM_NO_SERVER_BROWSER` / `build.bat nobrowser` | Compile out Internet master queries |
 
-CMake `-DVELLUM_NO_SERVER_BROWSER=ON` compiles the Internet query out entirely. Default is **OFF**. Favorites and LAN are unaffected. Runtime `internet = 0` in `vellum.cfg` does the same without a rebuild.
+CMake `-DVELLUM_NO_SERVER_BROWSER=ON` compiles the Internet query out entirely. Default is **OFF**. Favorites and LAN are unaffected. Runtime `internet = 0` in `masterservers.cfg` does the same without a rebuild.
 
 ## Auth smoke test
 

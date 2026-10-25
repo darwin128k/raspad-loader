@@ -47,6 +47,11 @@ if /I "%~1"=="nometahook" (
     shift
     goto parse_args
 )
+if /I "%~1"=="vellum" (
+    set AUTH_REVEMU2013=OFF
+    shift
+    goto parse_args
+)
 if /I "%~1"=="revemu2013" (
     set AUTH_REVEMU2013=ON
     shift

@@ -15,6 +15,7 @@ HL_DIR=""
 for arg in "$@"; do
     case "$arg" in
         standalone) STANDALONE=ON ;;
+        vellum) AUTH_REVEMU2013=OFF ;;
         revemu2013) AUTH_REVEMU2013=ON ;;
         nobrowser) NOBROWSER=ON ;;
         metahook|nometahook)

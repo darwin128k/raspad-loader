@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Compile only the selected auth implementation, including its listen-server parser and dependencies. Rename runtime master settings to `config/masterservers.cfg`; `vellum.cfg` remains a fallback for existing deployments.
+
 - Preserve quoted launch arguments on Windows and literal shell arguments on Linux, reject oversized command lines, and avoid dropping arguments after the old Linux standalone 64-token limit.
 
 - **One line of history.** `master` is the only development branch. **v1.0.0**

@@ -1,19 +1,22 @@
 #pragma once
 
 #include "types.h"
+#ifndef VELLUM_AUTH_REVEMU2013
 #include "vellum_ticket.h"
+#endif
 
 struct VellumIdentity {
 	char persona[64];
 #ifdef VELLUM_AUTH_REVEMU2013
 	char auth_key[32];
-#endif
+#else
 	uint8_t secret_key[64]; /* Ed25519: seed + public key */
 	uint8_t public_key[VELLUM_PUBLIC_KEY_SIZE];
+	bool key_saved; /* false: key is transient */
+#endif
 	uint32 account_id;
 	uint32 app_id;
 	CSteamID steam_id;
-	bool key_saved; /* false: key lives only in this process, SteamID changes next run */
 };
 
 void Vellum_InitIdentity();

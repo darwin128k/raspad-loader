@@ -1,13 +1,17 @@
 ﻿#include "types.h"
 #include "identity.h"
+#ifdef VELLUM_AUTH_REVEMU2013
 #include "revemu2013.h"
+#endif
 #include "exports.h"
 #include "steam_query.h"
 #include "steam_http.h"
 #include "steam_voice.h"
 #include "vellum_config.h"
 
+#ifndef VELLUM_AUTH_REVEMU2013
 #include <authum/crypto/ed25519.h>
+#endif
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -1639,7 +1643,7 @@ static void Vellum_MasterLoad()
 	return;
 #endif
 	/* No master is baked in: the deployment names its own in
-	 * <game>/config/vellum.cfg.  internet = 0, or an empty masters list,
+	 * <game>/config/masterservers.cfg.  internet = 0, or an empty masters list,
 	 * leaves the Internet tab empty. */
 	Vellum_ConfigLoad();
 	if (!Vellum_ConfigInternetEnabled()) {
@@ -2264,10 +2268,12 @@ static CSteamID Vellum_GameServerSteamId()
 
 static CSteamID Vellum_SteamIdFromAuthBlob(const void *blob, int len)
 {
+#ifdef VELLUM_AUTH_REVEMU2013
 	uint32 account;
 	if (RevEmu2013_AccountIdFromTicket(blob, len, &account)) {
 		return CSteamID(account, k_EUniversePublic, k_EAccountTypeIndividual);
 	}
+#else
 	if (blob != NULL && len == (int)sizeof(VellumTicket)) {
 		VellumTicket t;
 		memcpy(&t, blob, sizeof(t));
@@ -2279,6 +2285,7 @@ static CSteamID Vellum_SteamIdFromAuthBlob(const void *blob, int len)
 			                k_EAccountTypeIndividual);
 		}
 	}
+#endif
 	return CSteamID(Vellum_GetIdentity().account_id ^ 0x10000u, k_EUniversePublic, k_EAccountTypeIndividual);
 }
 

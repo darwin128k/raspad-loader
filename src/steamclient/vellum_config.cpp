@@ -2,6 +2,7 @@
 #include "steam_http.h" /* Vellum_Log */
 
 #include <stdio.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -62,10 +63,14 @@ static void Vellum_Trim(char *s)
 {
 	size_t n;
 
-	while (*s == ' ' || *s == '\t') {
-		s++;
-	}
-	n = strlen(s);
+    char *start = s;
+    while (*start == ' ' || *start == '\t') {
+        start++;
+    }
+    if (start != s) {
+        memmove(s, start, strlen(start) + 1);
+    }
+    n = strlen(s);
 	while (n > 0 && (s[n - 1] == ' ' || s[n - 1] == '\t' || s[n - 1] == '\r' || s[n - 1] == '\n')) {
 		s[--n] = '\0';
 	}
@@ -132,13 +137,22 @@ void Vellum_ConfigLoad(void)
 
 	Vellum_GameDir(dir, sizeof(dir));
 #ifdef _WIN32
-	_snprintf(path, sizeof(path), "%sconfig\\vellum.cfg", dir);
+	_snprintf(path, sizeof(path), "%sconfig\\masterservers.cfg", dir);
 #else
-	snprintf(path, sizeof(path), "%sconfig/vellum.cfg", dir);
+	snprintf(path, sizeof(path), "%sconfig/masterservers.cfg", dir);
 #endif
 	path[sizeof(path) - 1] = '\0';
 
 	f = fopen(path, "r");
+    if (f == NULL && errno == ENOENT) {
+#ifdef _WIN32
+        _snprintf(path, sizeof(path), "%sconfig\\vellum.cfg", dir);
+#else
+        snprintf(path, sizeof(path), "%sconfig/vellum.cfg", dir);
+#endif
+        path[sizeof(path) - 1] = '\0';
+        f = fopen(path, "r");
+    }
 	if (f == NULL) {
 		Vellum_Log("config: no %s - internet on, no master configured", path);
 		return;
