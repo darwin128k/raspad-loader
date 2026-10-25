@@ -114,6 +114,19 @@ Pushing a tag beginning with `v` also creates a GitHub Release (or updates its a
 with all eight game/platform/auth archives and their checksums. Branch/PR builds
 stay in Actions and expire after 30 days. The workflow does not create tags.
 
+Each tagged release automatically gets up to five Highlights and a collapsible
+Full changelog grouped by commit type, with commit links and a comparison to the
+nearest preceding ancestor `v*` tag. Direct commits are included; PRs are not required.
+Use descriptive commit subjects (`feat:`, `fix:`, `build:`, etc.) for useful summaries;
+untyped commits are also included. `!` marks a breaking change.
+No manual `CHANGELOG.md` update is needed for the release description. The existing
+file remains a historical document; CI does not commit changes back to the repository.
+The release is published after successful builds and asset upload. Tags such as
+`v2.2.0-rc.1` are marked as prereleases. Rerunning a tag refreshes its generated notes.
+
+Preview without creating a tag:
+`python tools/release_notes.py --tag HEAD --repository darwin128k/raspad-loader --output release-notes.md`.
+
 ## Build
 
 32-bit only, to match `hw` and `steam_api`.
