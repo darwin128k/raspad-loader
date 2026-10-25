@@ -64,7 +64,7 @@ void Vellum_Log(const char *fmt, ...)
 	if (slash != NULL) {
 		slash[1] = '\0';
 	}
-	_snprintf(path, sizeof(path), "%svellum.log", dir);
+	_snprintf(path, sizeof(path), "%sloader.log", dir);
 #else
 	struct timeval tv;
 	struct tm tm;
@@ -72,7 +72,7 @@ void Vellum_Log(const char *fmt, ...)
 	localtime_r(&tv.tv_sec, &tm);
 	snprintf(stamp, sizeof(stamp), "%02d:%02d:%02d.%03d ",
 	         tm.tm_hour, tm.tm_min, tm.tm_sec, (int)(tv.tv_usec / 1000));
-	strncpy(path, "vellum.log", sizeof(path) - 1);
+	strncpy(path, "loader.log", sizeof(path) - 1);
 	path[sizeof(path) - 1] = '\0';
 #endif
 	stamp[sizeof(stamp) - 1] = '\0';
@@ -1643,7 +1643,7 @@ static void Vellum_MasterLoad()
 	return;
 #endif
 	/* No master is baked in: the deployment names its own in
-	 * <game>/config/masterservers.cfg.  internet = 0, or an empty masters list,
+	 * <game>/config/loader.cfg.  internet = 0, or an empty masters list,
 	 * leaves the Internet tab empty. */
 	Vellum_ConfigLoad();
 	if (!Vellum_ConfigInternetEnabled()) {

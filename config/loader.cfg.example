@@ -1,4 +1,4 @@
-# Copy to masterservers.cfg next to this file to use these settings.
+# Copy to loader.cfg next to this file to use these settings.
 # 0 disables Internet master queries; favorites and LAN still work.
 internet = 1
 

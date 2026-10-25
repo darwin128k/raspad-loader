@@ -1,4 +1,4 @@
-name: Build downloads
+name: Raspad Loader builds
 
 on:
   push:
@@ -35,7 +35,7 @@ jobs:
       - name: Upload archives and checksums
         uses: actions/upload-artifact@v4
         with:
-          name: vellum-windows-x86-${{ matrix.auth }}
+          name: raspad-loader-windows-x86-${{ matrix.auth }}
           path: dist/*
           if-no-files-found: error
           retention-days: 30
@@ -65,7 +65,7 @@ jobs:
       - name: Upload archives and checksums
         uses: actions/upload-artifact@v4
         with:
-          name: vellum-linux-x86-${{ matrix.auth }}
+          name: raspad-loader-linux-x86-${{ matrix.auth }}
           path: dist/*
           if-no-files-found: error
           retention-days: 30
@@ -81,7 +81,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          pattern: vellum-*
+          pattern: raspad-loader-*
           path: dist
           merge-multiple: true
       - name: Publish release archives

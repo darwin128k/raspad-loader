@@ -115,7 +115,7 @@ static void FillPersona(char *persona, size_t personaSize)
 {
 	DWORD n = (DWORD)personaSize;
 	if (!GetUserNameA(persona, &n) || persona[0] == '\0') {
-		strncpy(persona, "Vellum", personaSize - 1);
+		strncpy(persona, "Player", personaSize - 1);
 		persona[personaSize - 1] = '\0';
 	}
 }
@@ -152,7 +152,7 @@ static void FillPersona(char *persona, size_t personaSize)
 		strncpy(persona, pw->pw_name, personaSize - 1);
 		persona[personaSize - 1] = '\0';
 	} else {
-		strncpy(persona, "Vellum", personaSize - 1);
+		strncpy(persona, "Player", personaSize - 1);
 		persona[personaSize - 1] = '\0';
 	}
 }

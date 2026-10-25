@@ -20,7 +20,7 @@ if(VELLUM_APPID STREQUAL "")
     set(VELLUM_APPID "10")
 endif()
 
-message(STATUS "vellum: wrapper '${VELLUM_NAME}' starts -game ${VELLUM_GAME} (AppId ${VELLUM_APPID})")
+message(STATUS "loader: wrapper '${VELLUM_NAME}' starts -game ${VELLUM_GAME} (AppId ${VELLUM_APPID})")
 
 if(WIN32)
     add_executable(${VELLUM_NAME} WIN32 main.cpp)
