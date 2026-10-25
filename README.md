@@ -89,8 +89,8 @@ four artifact bundles: Windows/Linux x86, each with Vellum v2 or RevEmu 2013 aut
 Each bundle contains separate archives for Counter-Strike 1.6 and Sven Co-op plus
 SHA-256 checksums. Windows downloads are ZIP; Linux downloads are tar.gz.
 
-Archives include the game wrapper, `hl.exe` / `hl_linux`, steamclient, instructions, licenses, and
-`config/vellum.cfg.example`. Existing configs are preserved. Game data and engine libraries (`hw`, filesystem, etc.)
+Archives include the game wrapper, steamclient, instructions, licenses, and
+`config/vellum.cfg.example`. Existing configs are preserved. `hl.exe` / `hl_linux`, game data, and engine libraries
 are required separately. Select one auth variant per installation; auth is chosen
 at build time. Vellum v2 is the default for local builds.
 
@@ -98,12 +98,9 @@ Linux builds target Debian 12 x86 (glibc 2.36+). Runtime packages:
 `libopus0:i386`, `libasound2:i386`, and `libcurl4:i386` for HTTP.
 Windows builds use the static MSVC runtime.
 
-CI fetches `darwin128k/raspad-hl` (`master` by default) and builds its launcher through
-`HL_DIR`. Publish its Linux port before enabling these builds. Manual runs can select
-`hl_ref` (branch, tag, or commit). Local CI-equivalent builds use
-`python tools/ci_build.py --platform windows --auth vellum --hl-dir ../raspad-hl`
-(or `python3 ... --platform linux`). These are wrapper builds; standalone remains
-available separately through the existing build scripts.
+CI builds the normal wrappers from this repository, without fetching `raspad-hl`.
+Use them with the HL executable already in your game installation. Standalone builds
+remain available separately through the existing local build scripts.
 
 Pushing a tag beginning with `v` also creates a GitHub Release (or updates its assets)
 with all eight game/platform/auth archives and their checksums. Branch/PR builds

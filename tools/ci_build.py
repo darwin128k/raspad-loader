@@ -21,7 +21,7 @@ def run(*args):
     subprocess.run(list(map(str, args)), cwd=ROOT, check=True)
 
 
-def package(build, platform, auth, game, version, output, hl_build, hl_source):
+def package(build, platform, auth, game, version, output):
     name = f"vellum-{game}-{platform}-x86-{auth}-{version}"
     loader = f"{game}.exe" if platform == "windows" else f"{game}_linux"
     client = "steamclient.dll" if platform == "windows" else "steamclient.so"
@@ -32,15 +32,11 @@ def package(build, platform, auth, game, version, output, hl_build, hl_source):
         stage = Path(tmp)
         for binary in (loader, client):
             shutil.copy2(build / binary, stage / binary)
-        engine = "hl.exe" if platform == "windows" else "hl_linux"
-        shutil.copy2(hl_build / ("hl.exe" if platform == "windows" else "hl"), stage / engine)
         if platform == "linux":
             (stage / loader).chmod(0o755)
-            (stage / engine).chmod(0o755)
         shutil.copy2(ROOT / "LICENSE", stage / "LICENSE")
         licenses = stage / "licenses"
         licenses.mkdir()
-        shutil.copy2(hl_source / "LICENSE", licenses / "HL.txt")
         shutil.copy2(ROOT / "lib/authum/lib/monocypher/LICENCE.md", licenses / "Monocypher.md")
         if platform == "windows":
             shutil.copy2(build / "_deps/opus-src/COPYING", licenses / "Opus.txt")
@@ -63,8 +59,8 @@ def package(build, platform, auth, game, version, output, hl_build, hl_source):
             f"Vellum {version} / {game} / {platform} x86 / auth: {auth}\n\n"
             f"Extract these files beside {engine} in your game installation.\n"
             f"Start {loader}; it launches {engine} -game {game}.\n"
-            "This archive includes the wrapper, HL launcher and steamclient.\n"
-            "Engine libraries (hw.dll / hw.so, filesystem, etc.) and game data are required separately.\n"
+            "This archive contains the game wrapper and steamclient.\n"
+            "Use the existing hl.exe / hl_linux, engine libraries and game data from your installation.\n"
             "Use only one auth variant in a game installation: steamclient has the same filename.\n\n"
             + runtime + "\n"
             "Vellum auth uses the per-user profile key. RevEmu 2013 uses the legacy machine identity.\n"
@@ -92,22 +88,8 @@ def package(build, platform, auth, game, version, output, hl_build, hl_source):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--platform", choices=("windows", "linux"), required=True)
-    parser.add_argument("--hl-dir", type=Path, default=os.environ.get("HL_DIR"),
-                        help="Path to the published cross-platform raspad-hl sources (or HL_DIR env)")
     parser.add_argument("--auth", choices=("vellum", "revemu2013"), required=True)
     args = parser.parse_args()
-    if args.hl_dir is None:
-        parser.error("--hl-dir or HL_DIR is required to package the HL launcher")
-    hl_source = args.hl_dir.resolve()
-    if not (hl_source / "src/launcher.cpp").is_file():
-        parser.error("HL_DIR must contain raspad-hl/src/launcher.cpp")
-    if args.platform == "linux" and not (hl_source / "src/main_linux.cpp").is_file():
-        parser.error("Publish the Linux port of raspad-hl first: src/main_linux.cpp is missing")
-    hl_build = ROOT / "build-ci" / args.platform / "hl"
-    run("cmake", "-S", hl_source, "-B", hl_build, "-G", "Ninja",
-        "-DCMAKE_BUILD_TYPE=Release", "-DHL_METAHHOOK=OFF",
-        *(["-DCMAKE_C_COMPILER=cl", "-DCMAKE_CXX_COMPILER=cl"] if args.platform == "windows" else []))
-    run("cmake", "--build", hl_build, "--parallel", "2")
     if os.environ.get("GITHUB_REF_TYPE") == "tag":
         version = os.environ["GITHUB_REF_NAME"]
     else:
@@ -127,7 +109,7 @@ def main():
         run("cmake", "--build", build, "--target", "auth_ticket_smoke", "loader_args_smoke", "--parallel", "2")
         run(build / ("auth_ticket_smoke.exe" if args.platform == "windows" else "auth_ticket_smoke"))
         run(build / ("loader_args_smoke.exe" if args.platform == "windows" else "loader_args_smoke"))
-        package(build, args.platform, args.auth, game, version, ROOT / "dist", hl_build, hl_source)
+        package(build, args.platform, args.auth, game, version, ROOT / "dist")
 
 
 if __name__ == "__main__":
