@@ -2,6 +2,8 @@
 #include "launcher.h"
 #endif
 
+#include "command_line.h"
+#include <vector>
 #include <errno.h>
 #include <locale.h>
 #include <stdio.h>
@@ -82,6 +84,10 @@ static void DirFromSelf(char *dir, size_t dirSize)
 static void AppendArg(char *cmd, size_t cmdSize, const char *arg)
 {
 	size_t n = strlen(cmd);
+	if (n + (n ? 1 : 0) + strlen(arg) >= cmdSize) {
+		Fail("Game arguments exceed the command-line limit.");
+		exit(1);
+	}
 	if (n > 0 && n + 1 < cmdSize) {
 		cmd[n++] = ' ';
 		cmd[n] = '\0';
@@ -106,51 +112,6 @@ static int HasArg(const char *cmd, const char *arg)
 	}
 	return 0;
 }
-
-#ifdef REVLOADER_STANDALONE
-static void AppendLaunchTail(char *cmd, size_t cmdSize, const char *procName)
-{
-	const char *rest = procName;
-
-	if (rest[0] == '"') {
-		rest = strchr(rest + 1, '"');
-		if (rest == NULL) {
-			return;
-		}
-		rest++;
-	} else {
-		while (*rest != '\0' && *rest != ' ' && *rest != '\t') {
-			rest++;
-		}
-	}
-	while (*rest == ' ' || *rest == '\t') {
-		rest++;
-	}
-	if (*rest != '\0') {
-		AppendArg(cmd, cmdSize, rest);
-	}
-}
-
-static int ArgvHasToken(int argc, char **argv, const char *arg)
-{
-	int i;
-	for (i = 1; i < argc; i++) {
-		if (strcmp(argv[i], arg) == 0) {
-			return 1;
-		}
-	}
-	return 0;
-}
-
-static void JoinArgv(char *cmd, size_t cmdSize, int argc, char **argv)
-{
-	int i;
-	cmd[0] = '\0';
-	for (i = 0; i < argc; i++) {
-		AppendArg(cmd, cmdSize, argv[i]);
-	}
-}
-#endif
 
 static int ReadSteamAppId(const char *dir, char *out, size_t outSize)
 {
@@ -466,8 +427,8 @@ static void EnsureSteamLooksRunning(void)
 int main(int argc, char **argv)
 {
 	char dir[4096];
-	char procName[1024];
-	char extraArgs[1024];
+	char procName[32768];
+	char extraArgs[32768];
 	char appId[256];
 	char steamClient[4096];
 	int i;
@@ -495,7 +456,15 @@ int main(int argc, char **argv)
 			 * "-game" from the caller is dropped. */
 			i++;
 		} else {
-			AppendArg(extraArgs, sizeof(extraArgs), argv[i]);
+#ifdef REVLOADER_STANDALONE
+			const bool shell = false;
+#else
+			const bool shell = true;
+#endif
+			if (!Vellum_AppendArgument(extraArgs, sizeof(extraArgs), argv[i], shell)) {
+				Fail("Game arguments exceed the command-line limit.");
+				return 1;
+			}
 		}
 	}
 
@@ -564,19 +533,20 @@ int main(int argc, char **argv)
 
 #ifdef REVLOADER_STANDALONE
 	{
-		char engineCmd[4096];
+		char engineCmd[65536];
 
-		JoinArgv(engineCmd, sizeof(engineCmd), argc, argv);
-		if (procName[0] != '\0' && !HasArg(engineCmd, "-game")) {
-			AppendLaunchTail(engineCmd, sizeof(engineCmd), procName);
+		engineCmd[0] = '\0';
+		Vellum_AppendArgument(engineCmd, sizeof(engineCmd), argv[0]);
+		AppendArg(engineCmd, sizeof(engineCmd), extraArgs);
+		AppendArg(engineCmd, sizeof(engineCmd), "-game " VELLUM_GAME);
+		bool correctGame = false;
+		for (int j = 1; j + 1 < argc; ++j) {
+			if (strcmp(argv[j], "-game") == 0 && strcmp(argv[j + 1], VELLUM_GAME) == 0)
+				correctGame = true;
 		}
-		if (!HasArg(engineCmd, "-game")) {
-			AppendArg(engineCmd, sizeof(engineCmd), "-game");
-			AppendArg(engineCmd, sizeof(engineCmd), VELLUM_GAME);
-		}
-		if (!ArgvHasToken(argc, argv, "-game")) {
+		if (!correctGame) {
 			char selfPath[4096];
-			char *nargv[64];
+			std::vector<char *> nargv((size_t)argc + 3);
 			int n = 0;
 			int j;
 			ssize_t rn = readlink("/proc/self/exe", selfPath, sizeof(selfPath) - 1);
@@ -587,7 +557,7 @@ int main(int argc, char **argv)
 			}
 			selfPath[rn] = '\0';
 			nargv[n++] = selfPath;
-			for (j = 1; j < argc && n + 3 < 64; j++) {
+			for (j = 1; j < argc; j++) {
 				/* the wrapper owns the game: drop a "-game" from the
 				 * caller so ours is the only one the engine sees */
 				if (strcmp(argv[j], "-game") == 0 && j + 1 < argc) {
@@ -599,7 +569,7 @@ int main(int argc, char **argv)
 			nargv[n++] = (char *)"-game";
 			nargv[n++] = (char *)VELLUM_GAME;
 			nargv[n] = NULL;
-			execv(selfPath, nargv);
+			execv(selfPath, nargv.data());
 			Fail("Unable to re-exec with -game.");
 			return 1;
 		}
@@ -607,7 +577,7 @@ int main(int argc, char **argv)
 	}
 #else
 	{
-		char shellCmd[4096];
+		char shellCmd[65536];
 		snprintf(shellCmd, sizeof(shellCmd), "exec %s", procName);
 		shellCmd[sizeof(shellCmd) - 1] = '\0';
 		execl("/bin/sh", "sh", "-c", shellCmd, (char *)NULL);

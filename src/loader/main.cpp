@@ -1,5 +1,6 @@
 #include <windows.h>
 #include <shellapi.h>
+#include "command_line.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -71,13 +72,20 @@ static void DirFromModulePath(char *dir, size_t dirSize)
 
 static void WideToAnsi(const wchar_t *wide, char *out, size_t outSize)
 {
-    WideCharToMultiByte(CP_ACP, 0, wide, -1, out, (int)outSize, NULL, NULL);
+    if (!WideCharToMultiByte(CP_ACP, 0, wide, -1, out, (int)outSize, NULL, NULL)) {
+        Fail("Unable to encode a command-line argument within the size limit.");
+        ExitProcess(1);
+    }
     out[outSize - 1] = '\0';
 }
 
 static void AppendArg(char *cmd, size_t cmdSize, const char *arg)
 {
     size_t n = strlen(cmd);
+    if (n + (n ? 1 : 0) + strlen(arg) >= cmdSize) {
+        Fail("Game arguments exceed the command-line limit.");
+        ExitProcess(1);
+    }
     if (n > 0 && n + 1 < cmdSize) {
         cmd[n++] = ' ';
         cmd[n] = '\0';
@@ -254,8 +262,8 @@ static int RunChild(char *cmdLine)
 int WINAPI WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int show)
 {
     char dir[MAX_PATH];
-    char procName[1024];
-    char extraArgs[1024];
+    char procName[32768];
+    char extraArgs[32768];
     char appId[256];
     char steamClient[MAX_PATH];
     SteamIpc ipc;
@@ -299,9 +307,14 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int show)
                  * something else behind our back. */
                 i++;
             } else {
-                char arg[512];
+                char arg[32768];
                 WideToAnsi(argvW[i], arg, sizeof(arg));
-                AppendArg(extraArgs, sizeof(extraArgs), arg);
+                if (!Vellum_AppendArgument(extraArgs, sizeof(extraArgs), arg)) {
+                    LocalFree(argvW);
+                    Fail("Game arguments exceed the command-line limit.");
+                    if (instanceMutex) CloseHandle(instanceMutex);
+                    return 1;
+                }
             }
         }
         LocalFree(argvW);
@@ -351,7 +364,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int show)
 
 #ifdef REVLOADER_STANDALONE
     {
-        char engineCmd[4096];
+        char engineCmd[32768];
         int rc;
 
         /* Our own command line: the caller's arguments (minus -game, which

@@ -81,6 +81,34 @@ No master is baked into the binary: every deployment names its own. To
 disable the Internet list without a config file, compile with
 `-DVELLUM_NO_SERVER_BROWSER=ON` or `build.bat nobrowser`.
 
+## Download automatic builds
+
+GitHub Actions **Build downloads** runs on pushes, pull requests, and manual dispatch.
+Open a successful run under **Actions**, then download its **Artifacts**. There are
+four artifact bundles: Windows/Linux x86, each with Vellum v2 or RevEmu 2013 auth.
+Each bundle contains separate archives for Counter-Strike 1.6 and Sven Co-op plus
+SHA-256 checksums. Windows downloads are ZIP; Linux downloads are tar.gz.
+
+Archives include the game wrapper, `hl.exe` / `hl_linux`, steamclient, instructions, licenses, and
+`config/vellum.cfg.example`. Existing configs are preserved. Game data and engine libraries (`hw`, filesystem, etc.)
+are required separately. Select one auth variant per installation; auth is chosen
+at build time. Vellum v2 is the default for local builds.
+
+Linux builds target Debian 12 x86 (glibc 2.36+). Runtime packages:
+`libopus0:i386`, `libasound2:i386`, and `libcurl4:i386` for HTTP.
+Windows builds use the static MSVC runtime.
+
+CI fetches `darwin128k/raspad-hl` (`master` by default) and builds its launcher through
+`HL_DIR`. Publish its Linux port before enabling these builds. Manual runs can select
+`hl_ref` (branch, tag, or commit). Local CI-equivalent builds use
+`python tools/ci_build.py --platform windows --auth vellum --hl-dir ../raspad-hl`
+(or `python3 ... --platform linux`). These are wrapper builds; standalone remains
+available separately through the existing build scripts.
+
+Pushing a tag beginning with `v` also creates a GitHub Release (or updates its assets)
+with all eight game/platform/auth archives and their checksums. Branch/PR builds
+stay in Actions and expire after 30 days. The workflow does not create tags.
+
 ## Build
 
 32-bit only, to match `hw` and `steam_api`.
@@ -201,6 +229,11 @@ then run `<build-dir>/auth_ticket_smoke` (`.exe` on Windows). It checks buffer l
 ticket size, and SteamID consistency; Vellum v2 also checks the signature and rejects
 a changed server address. Run it once with `VELLUM_AUTH_REVEMU2013=OFF` and once with `ON`.
 The Vellum test loads or creates the current user's profile key, like the client.
+
+`cmake --build <build-dir> --target loader_args_smoke` checks argument round trips
+through the Windows command-line parser or Linux shell parser, including spaces,
+quotes, empty values, and shell metacharacters. Run the resulting executable.
+Both smoke tests run before CI packages any downloads.
 
 ## License
 
