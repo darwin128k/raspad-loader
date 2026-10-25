@@ -39,6 +39,11 @@ else()
     target_link_libraries(steamclient PRIVATE pthread dl opus asound)
 endif()
 
+target_sources(steamclient PRIVATE revemu2013.cpp)
+if(VELLUM_AUTH_REVEMU2013)
+    target_compile_definitions(steamclient PRIVATE VELLUM_AUTH_REVEMU2013)
+endif()
+
 # Ed25519 for Vellum v2 tickets: Authum's wrapper over its vendored Monocypher
 # (only these three C files вЂ” no lh, no authum_client).
 target_sources(steamclient PRIVATE
@@ -69,4 +74,27 @@ set_target_properties(steamclient PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
     ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
+)
+
+# Explicit smoke-test target; excluded from normal game builds.
+add_executable(auth_ticket_smoke EXCLUDE_FROM_ALL
+    ${CMAKE_SOURCE_DIR}/tools/auth_ticket_smoke.cpp
+    identity.cpp
+    revemu2013.cpp
+    ${AUTHUM_DIR}/src/client/ed25519.c
+    ${AUTHUM_DIR}/lib/monocypher/monocypher.c
+    ${AUTHUM_DIR}/lib/monocypher/monocypher-ed25519.c
+)
+target_include_directories(auth_ticket_smoke PRIVATE $<TARGET_PROPERTY:steamclient,INCLUDE_DIRECTORIES>)
+target_compile_definitions(auth_ticket_smoke PRIVATE $<TARGET_PROPERTY:steamclient,COMPILE_DEFINITIONS>)
+if(WIN32)
+    target_link_libraries(auth_ticket_smoke PRIVATE advapi32 bcrypt)
+endif()
+if(MSVC)
+    target_compile_options(auth_ticket_smoke PRIVATE /utf-8 /UNDEBUG)
+else()
+    target_compile_options(auth_ticket_smoke PRIVATE -UNDEBUG)
+endif()
+set_target_properties(auth_ticket_smoke PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
 )

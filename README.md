@@ -52,7 +52,8 @@ and dropping `res/<name>.rc` + `res/<name>.ico` next to the cstrike ones.
 ## What steamclient implements
 
 - **SteamClient012 / 017 / 020** — enough of `CreateInterface` for GoldSrc 8684 and Steam Half-Life (Oct 2024 / 10210+).
-- **Auth** — 120-byte Vellum v2 ticket (`VLLM`), Ed25519-signed for the server address the engine dials and the local clock; checked by [qproto](https://github.com/darwin128k/raspad-qproto) 2.x. No RevEmu dialect. Ed25519 comes from [Authum](https://github.com/darwin128k/raspad-authum) (`lib/authum` submodule, vendored Monocypher).
+- **Auth** — 120-byte Vellum v2 ticket (`VLLM`), Ed25519-signed for the server address the engine dials and the local clock; checked by [qproto](https://github.com/darwin128k/raspad-qproto) 2.x. Optional RevEmu 2013 tickets are available with `build.bat revemu2013` / `./build.sh revemu2013` or CMake `-DVELLUM_AUTH_REVEMU2013=ON`. Vellum v2 remains the default; one outgoing dialect is selected per build. Ed25519 comes from [Authum](https://github.com/darwin128k/raspad-authum) (`lib/authum` submodule, vendored Monocypher).
+- **RevEmu 2013 identity** uses the legacy Windows C: volume serial / Linux machine-id, without the Vellum profile key. Build without `revemu2013` to return to Vellum v2.
 - **Identity** — persona is the OS user name. The SteamID comes from a key pair created on first run and kept in the user profile (Windows: `%APPDATA%\Raspad\vellum.key`; Linux: `$XDG_DATA_HOME/raspad/vellum.key` or `~/.local/share/raspad/vellum.key`, mode 0600). Never in the game folder — copy that key and you copy the SteamID. Nothing about the machine (hostname, disk serial) is sent.
 - **Server browser** — favorites/history via `config/serverbrowser.vdf`. The Internet list comes from the masters named in `config/vellum.cfg`; with no master configured the tab stays empty. LAN is UDP broadcast. Game/map/ping are filled with A2S.
 - **HTTP** — real `ISteamHTTP` for FastDL and list fetches (WinINet on Windows, libcurl on Linux).
@@ -188,9 +189,18 @@ v2 is what Sven Co-op was checked against. Checkout the tag if you need that sna
 | `VELLUM_NAME` / `VELLUM_GAME` / `VELLUM_APPID` | Wrapper edition (cstrike, svencoop, …) |
 | `VELLUM_STANDALONE` / `build.bat standalone` | Compile `hl` launcher into the wrapper |
 | `HL_METAHHOOK` / `build.bat metahook` | Embed MetaHookSv (Windows standalone only) |
+| `VELLUM_AUTH_REVEMU2013` / `build.bat revemu2013` | Use RevEmu 2013 authentication (default OFF, Vellum v2) |
 | `VELLUM_NO_SERVER_BROWSER` / `build.bat nobrowser` | Compile out Internet master queries |
 
 CMake `-DVELLUM_NO_SERVER_BROWSER=ON` compiles the Internet query out entirely. Default is **OFF**. Favorites and LAN are unaffected. Runtime `internet = 0` in `vellum.cfg` does the same without a rebuild.
+
+## Auth smoke test
+
+After configuring either auth mode, run `cmake --build <build-dir> --target auth_ticket_smoke`,
+then run `<build-dir>/auth_ticket_smoke` (`.exe` on Windows). It checks buffer limits,
+ticket size, and SteamID consistency; Vellum v2 also checks the signature and rejects
+a changed server address. Run it once with `VELLUM_AUTH_REVEMU2013=OFF` and once with `ON`.
+The Vellum test loads or creates the current user's profile key, like the client.
 
 ## License
 

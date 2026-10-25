@@ -1,4 +1,5 @@
 #include "identity.h"
+#include "revemu2013.h"
 
 #include <authum/crypto/ed25519.h>
 
@@ -265,6 +266,62 @@ static void LoadOrCreateKey(VellumIdentity *id)
 	authum_crypto_ed25519_key_pair(id->secret_key, id->public_key, seed);
 }
 
+#ifdef VELLUM_AUTH_REVEMU2013
+#ifndef _WIN32
+static uint32 ReadMachineSerial(void)
+{
+	FILE *f = fopen("/etc/machine-id", "r");
+	char buf[64] = {};
+	size_t n;
+	size_t i;
+	unsigned v = 0;
+	int digits = 0;
+
+	if (f == NULL) {
+		f = fopen("/var/lib/dbus/machine-id", "r");
+	}
+	if (f == NULL) {
+		return 1;
+	}
+	n = fread(buf, 1, sizeof(buf) - 1, f);
+	fclose(f);
+	buf[n] = '\0';
+
+	for (i = 0; buf[i] != '\0' && digits < 8; i++) {
+		unsigned d;
+		char c = buf[i];
+		if (c == ' ' || c == '\t' || c == '\r' || c == '\n') {
+			continue;
+		}
+		if (c >= '0' && c <= '9') {
+			d = (unsigned)(c - '0');
+		} else if (c >= 'a' && c <= 'f') {
+			d = (unsigned)(c - 'a' + 10);
+		} else if (c >= 'A' && c <= 'F') {
+			d = (unsigned)(c - 'A' + 10);
+		} else {
+			break;
+		}
+		v = (v << 4) | d;
+		digits++;
+	}
+	return digits == 8 && v != 0 ? (uint32)v : 1u;
+}
+
+#endif
+static void FillRevEmuAuthKey(char *key, size_t size)
+{
+#ifdef _WIN32
+	DWORD serial = 0;
+	GetVolumeInformationA("C:\\", NULL, 0, &serial, NULL, NULL, NULL, 0);
+#else
+	uint32 serial = ReadMachineSerial();
+#endif
+	vellum_snprintf(key, size, "%u", (unsigned)(serial ? serial : 1));
+	key[size - 1] = '\0';
+}
+#endif
+
 void Vellum_InitIdentity()
 {
 	if (g_ready) {
@@ -276,13 +333,21 @@ void Vellum_InitIdentity()
 	DirFromThisDll(dir, sizeof(dir));
 
 	FillPersona(g_id.persona, sizeof(g_id.persona));
+#ifdef VELLUM_AUTH_REVEMU2013
+	FillRevEmuAuthKey(g_id.auth_key, sizeof(g_id.auth_key));
+	g_id.account_id = RevEmu2013_AccountId(g_id.auth_key);
+#else
 	LoadOrCreateKey(&g_id);
-
 	g_id.account_id = Vellum_AccountIdFromKey(g_id.public_key);
+#endif
 	g_id.app_id = ReadAppId(dir);
 	g_id.steam_id = CSteamID(g_id.account_id, k_EUniversePublic, k_EAccountTypeIndividual);
 	g_ready = 1;
+#ifdef VELLUM_AUTH_REVEMU2013
+	Vellum_Log("ident kind=revemu2013 persona=%s account=%u app=%u steamid=%llu",
+#else
 	Vellum_Log("ident kind=vellum-v2 persona=%s account=%u app=%u steamid=%llu",
+#endif
 	           g_id.persona, (unsigned)g_id.account_id, (unsigned)g_id.app_id,
 	           (unsigned long long)g_id.steam_id.ConvertToUint64());
 }
@@ -296,6 +361,9 @@ const VellumIdentity &Vellum_GetIdentity()
 int Vellum_WriteAuthBlob(void *blob, int maxBytes, uint32 serverIp, uint16 serverPort)
 {
 	const VellumIdentity &id = Vellum_GetIdentity();
+#ifdef VELLUM_AUTH_REVEMU2013
+	return RevEmu2013_WriteTicket(blob, maxBytes, id.auth_key);
+#else
 	VellumTicket ticket;
 	if (blob == NULL || maxBytes < (int)sizeof(VellumTicket)) {
 		return 0;
@@ -305,4 +373,5 @@ int Vellum_WriteAuthBlob(void *blob, int maxBytes, uint32 serverIp, uint16 serve
 	                           (authum_usize_t)VELLUM_TICKET_SIGNED_SIZE);
 	memcpy(blob, &ticket, sizeof(ticket));
 	return (int)sizeof(ticket);
+#endif
 }
