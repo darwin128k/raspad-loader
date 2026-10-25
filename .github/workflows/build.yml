@@ -100,11 +100,11 @@ jobs:
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
           if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            gh release edit "$RELEASE_TAG" --title "Loader $RELEASE_TAG" --notes-file release-notes.md
+            gh release edit "$RELEASE_TAG" --title "$RELEASE_TAG" --notes-file release-notes.md
           else
             flags=()
             if [[ "$RELEASE_TAG" == *-* ]]; then flags+=(--prerelease); fi
-            gh release create "$RELEASE_TAG" --draft --verify-tag --title "Loader $RELEASE_TAG" --notes-file release-notes.md "${flags[@]}"
+            gh release create "$RELEASE_TAG" --draft --verify-tag --title "$RELEASE_TAG" --notes-file release-notes.md "${flags[@]}"
           fi
           gh release upload "$RELEASE_TAG" dist/* --clobber
           gh release edit "$RELEASE_TAG" --draft=false
