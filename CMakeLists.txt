@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(raspad_loader LANGUAGES C CXX)
+project(loader LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
@@ -12,7 +12,7 @@ elseif(UNIX AND NOT APPLE)
     add_compile_options(-m32 -Wno-format-truncation)
     add_link_options(-m32)
 else()
-    message(FATAL_ERROR "Raspad Loader supports Windows and Linux")
+    message(FATAL_ERROR "Loader supports Windows and Linux")
 endif()
 
 option(VELLUM_STANDALONE "Run GoldSrc in this process (compile hl launcher sources from raspad-hl) instead of spawning hl" OFF)
