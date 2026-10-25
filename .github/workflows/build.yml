@@ -79,18 +79,32 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
       - uses: actions/download-artifact@v4
         with:
           pattern: raspad-loader-*
           path: dist
           merge-multiple: true
-      - name: Publish release archives
+      - name: Generate release changelog
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_REPOSITORY: ${{ github.repository }}
+        run: python3 tools/release_notes.py --tag "$RELEASE_TAG" --repository "$RELEASE_REPOSITORY" --output release-notes.md
+      - name: Publish release archives and changelog
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            gh release create "$RELEASE_TAG" --verify-tag --title "$RELEASE_TAG" --generate-notes
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release edit "$RELEASE_TAG" --title "Raspad Loader $RELEASE_TAG" --notes-file release-notes.md
+          else
+            flags=()
+            if [[ "$RELEASE_TAG" == *-* ]]; then flags+=(--prerelease); fi
+            gh release create "$RELEASE_TAG" --draft --verify-tag --title "Raspad Loader $RELEASE_TAG" --notes-file release-notes.md "${flags[@]}"
           fi
           gh release upload "$RELEASE_TAG" dist/* --clobber
+          gh release edit "$RELEASE_TAG" --draft=false
