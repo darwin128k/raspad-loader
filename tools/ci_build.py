@@ -37,7 +37,9 @@ def package(build, platform, auth, game, version, output):
         shutil.copy2(ROOT / "LICENSE", stage / "LICENSE")
         licenses = stage / "licenses"
         licenses.mkdir()
-        shutil.copy2(ROOT / "lib/authum/lib/monocypher/LICENCE.md", licenses / "Monocypher.md")
+        if auth == "vellum":
+            shutil.copy2(ROOT / "lib/lh/LICENSE.md", licenses / "LH.md")
+            shutil.copy2(ROOT / "lib/lh/licenses/Monocypher.txt", licenses / "Monocypher.txt")
         if platform == "windows":
             shutil.copy2(build / "_deps/opus-src/COPYING", licenses / "Opus.txt")
         config = stage / "config"

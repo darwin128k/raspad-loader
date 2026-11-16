@@ -4,7 +4,7 @@
 #endif
 
 #ifndef VELLUM_AUTH_REVEMU2013
-#include <authum/crypto/ed25519.h>
+#include <lh/core/crypto/ed25519.h>
 #endif
 
 #include <stdio.h>
@@ -251,7 +251,7 @@ static int SaveSeed(const char *path, const uint8_t seed[32])
 /* Load the profile key, or make and save a new one. */
 static void LoadOrCreateKey(VellumIdentity *id)
 {
-	uint8_t seed[AUTHUM_CRYPTO_ED25519_SEED_SIZE];
+	uint8_t seed[LH_CRYPTO_ED25519_SEED_SIZE];
 	char dir[MAX_PATH];
 	char path[MAX_PATH];
 	int have_path = KeyDir(dir, sizeof(dir));
@@ -276,7 +276,7 @@ static void LoadOrCreateKey(VellumIdentity *id)
 		}
 	}
 	/* key_pair wipes its seed argument. */
-	authum_crypto_ed25519_key_pair(id->secret_key, id->public_key, seed);
+	lh_crypto_ed25519_key_pair(id->secret_key, id->public_key, seed);
 }
 
 #endif
@@ -384,8 +384,8 @@ int Vellum_WriteAuthBlob(void *blob, int maxBytes, uint32 serverIp, uint16 serve
 		return 0;
 	}
 	Vellum_PrepareTicket(&ticket, serverIp, serverPort, (uint64_t)time(NULL), id.public_key);
-	authum_crypto_ed25519_sign(ticket.signature, id.secret_key, (const authum_byte_t *)&ticket,
-	                           (authum_usize_t)VELLUM_TICKET_SIGNED_SIZE);
+	lh_crypto_ed25519_sign(ticket.signature, id.secret_key, (const lh_byte_t *)&ticket,
+	                           (lh_usize_t)VELLUM_TICKET_SIGNED_SIZE);
 	memcpy(blob, &ticket, sizeof(ticket));
 	return (int)sizeof(ticket);
 #endif

@@ -45,11 +45,8 @@ if(VELLUM_AUTH_REVEMU2013)
     target_compile_definitions(steamclient PRIVATE VELLUM_AUTH_REVEMU2013)
     message(STATUS "loader auth: RevEmu 2013 only")
 else()
-    set(VELLUM_AUTH_SOURCES
-        ${AUTHUM_DIR}/src/client/ed25519.c
-        ${AUTHUM_DIR}/lib/monocypher/monocypher.c
-        ${AUTHUM_DIR}/lib/monocypher/monocypher-ed25519.c
-    )
+    set(VELLUM_AUTH_SOURCES)
+    target_link_libraries(steamclient PRIVATE lh)
     if(WIN32)
         target_link_libraries(steamclient PRIVATE bcrypt)
     endif()
@@ -60,8 +57,6 @@ target_sources(steamclient PRIVATE ${VELLUM_AUTH_SOURCES})
 target_include_directories(steamclient PRIVATE
     ${CMAKE_SOURCE_DIR}/src/common
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${AUTHUM_DIR}/include
-    ${AUTHUM_DIR}/lib/monocypher
 )
 
 if (MSVC)
@@ -89,6 +84,9 @@ add_executable(auth_ticket_smoke EXCLUDE_FROM_ALL
 )
 target_include_directories(auth_ticket_smoke PRIVATE $<TARGET_PROPERTY:steamclient,INCLUDE_DIRECTORIES>)
 target_compile_definitions(auth_ticket_smoke PRIVATE $<TARGET_PROPERTY:steamclient,COMPILE_DEFINITIONS>)
+if(NOT VELLUM_AUTH_REVEMU2013)
+    target_link_libraries(auth_ticket_smoke PRIVATE lh)
+endif()
 if(WIN32)
     target_link_libraries(auth_ticket_smoke PRIVATE advapi32)
     if(NOT VELLUM_AUTH_REVEMU2013)

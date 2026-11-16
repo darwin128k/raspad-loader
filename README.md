@@ -54,7 +54,7 @@ and dropping `res/<name>.rc` + `res/<name>.ico` next to the cstrike ones.
 ## What steamclient implements
 
 - **SteamClient012 / 017 / 020** — enough of `CreateInterface` for GoldSrc 8684 and Steam Half-Life (Oct 2024 / 10210+).
-- **Auth** — 120-byte Vellum v2 ticket (`VLLM`), Ed25519-signed for the server address the engine dials and the local clock; checked by [qproto](https://github.com/darwin128k/raspad-qproto) 2.x. Optional RevEmu 2013 tickets are available with `build.bat revemu2013` / `./build.sh revemu2013` or CMake `-DVELLUM_AUTH_REVEMU2013=ON`. Vellum v2 remains the default; only the selected implementation is compiled and linked. Ed25519 comes from [Authum](https://github.com/darwin128k/raspad-authum) (`lib/authum` submodule, vendored Monocypher).
+- **Auth** — 120-byte Vellum v2 ticket (`VLLM`), Ed25519-signed for the server address the engine dials and the local clock; checked by [qproto](https://github.com/darwin128k/raspad-qproto) 2.x. Optional RevEmu 2013 tickets are available with `build.bat revemu2013` / `./build.sh revemu2013` or CMake `-DVELLUM_AUTH_REVEMU2013=ON`. Vellum v2 remains the default; only the selected implementation is compiled and linked. Ed25519 comes from [LH](https://github.com/darwin128k/lh) (`lib/lh` submodule).
 - **RevEmu 2013 identity** uses the legacy Windows C: volume serial / Linux machine-id, without the Vellum profile key. Build without `revemu2013` to return to Vellum v2.
 - **Identity** — persona is the OS user name. The SteamID comes from a key pair created on first run and kept in the user profile (Windows: `%APPDATA%\Raspad\vellum.key`; Linux: `$XDG_DATA_HOME/raspad/vellum.key` or `~/.local/share/raspad/vellum.key`, mode 0600). Never in the game folder — copy that key and you copy the SteamID. Nothing about the machine (hostname, disk serial) is sent.
 - **Server browser** — favorites/history via `config/serverbrowser.vdf`. The Internet list comes from the masters named in `config/loader.cfg`; with no master configured the tab stays empty. LAN is UDP broadcast. Game/map/ping are filled with A2S.
@@ -135,11 +135,10 @@ Preview without creating a tag:
 
 32-bit only, to match `hw` and `steam_api`.
 
-Fetch the Authum submodule first (Ed25519 for Vellum tickets; nested
-submodules are not needed):
+Fetch the LH submodule first (Ed25519 for Vellum tickets):
 
 ```sh
-git submodule update --init lib/authum
+git submodule update --init lib/lh
 ```
 
 ### Windows
@@ -263,4 +262,4 @@ MIT. See [LICENSE](LICENSE).
 
 Windows builds vendor [Opus](https://github.com/xiph/opus) (BSD-style) through CMake FetchContent. Linux builds against the distro Opus package.
 
-`steamclient` compiles [Monocypher](https://monocypher.org/) 4.0.2 from the Authum submodule (`lib/authum/lib/monocypher`), Copyright (c) 2017-2023 Loup Vaillant, Michael Savage, Fabio Scotoni — BSD-2-Clause / CC0-1.0, see `lib/authum/lib/monocypher/LICENCE.md`.
+Vellum uses LH, whose Ed25519 code includes components ported from Monocypher; see `lib/lh/LICENSE.md` and `lib/lh/licenses/Monocypher.txt`.

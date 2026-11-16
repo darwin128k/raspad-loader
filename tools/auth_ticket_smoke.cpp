@@ -3,7 +3,7 @@
 #include "revemu2013.h"
 #endif
 #ifndef VELLUM_AUTH_REVEMU2013
-#include <authum/crypto/ed25519.h>
+#include <lh/core/crypto/ed25519.h>
 #endif
 #include <assert.h>
 #include <stdio.h>
@@ -40,11 +40,11 @@ int main()
 	assert(ticket.magic == VELLUM_TICKET_MAGIC && ticket.version == 2);
 	assert(ticket.server_ip == 0x01020304 && ticket.server_port == 27015);
 	assert(Vellum_AccountIdFromKey(ticket.public_key) == id.account_id);
-	assert(authum_crypto_ed25519_check(ticket.signature, ticket.public_key,
-		(const authum_byte_t *)&ticket, VELLUM_TICKET_SIGNED_SIZE));
+	assert(lh_crypto_ed25519_check(ticket.signature, ticket.public_key,
+		(const lh_byte_t *)&ticket, VELLUM_TICKET_SIGNED_SIZE));
 	ticket.server_port++;
-	assert(!authum_crypto_ed25519_check(ticket.signature, ticket.public_key,
-		(const authum_byte_t *)&ticket, VELLUM_TICKET_SIGNED_SIZE));
+	assert(!lh_crypto_ed25519_check(ticket.signature, ticket.public_key,
+		(const lh_byte_t *)&ticket, VELLUM_TICKET_SIGNED_SIZE));
 #endif
 	printf("auth smoke passed: %d bytes, account=%u\n", expected, (unsigned)id.account_id);
 }

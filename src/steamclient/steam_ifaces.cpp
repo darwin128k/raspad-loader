@@ -10,7 +10,7 @@
 #include "vellum_config.h"
 
 #ifndef VELLUM_AUTH_REVEMU2013
-#include <authum/crypto/ed25519.h>
+#include <lh/core/crypto/ed25519.h>
 #endif
 
 #include <stdarg.h>
@@ -2279,8 +2279,8 @@ static CSteamID Vellum_SteamIdFromAuthBlob(const void *blob, int len)
 		memcpy(&t, blob, sizeof(t));
 		/* Listen server: no key pins here, but the id must at least be the signer's. */
 		if (t.magic == VELLUM_TICKET_MAGIC && t.version == VELLUM_TICKET_VERSION &&
-		    authum_crypto_ed25519_check(t.signature, t.public_key, (const authum_byte_t *)&t,
-		                                (authum_usize_t)VELLUM_TICKET_SIGNED_SIZE)) {
+		    lh_crypto_ed25519_check(t.signature, t.public_key, (const lh_byte_t *)&t,
+		                                (lh_usize_t)VELLUM_TICKET_SIGNED_SIZE)) {
 			return CSteamID(Vellum_AccountIdFromKey(t.public_key), k_EUniversePublic,
 			                k_EAccountTypeIndividual);
 		}
